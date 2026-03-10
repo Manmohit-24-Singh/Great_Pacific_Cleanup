@@ -20,7 +20,7 @@ An arcade-style 2D vertical scrolling ocean cleanup game built with **Pygame-CE*
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Manmohit-24-Singh/Great_Pacific_Cleanup.git
 cd Great_Pacific_Cleanup
 ```
 
