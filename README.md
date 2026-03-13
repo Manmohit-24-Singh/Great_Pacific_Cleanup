@@ -89,6 +89,6 @@ Navigate to `http://localhost:8000/` to play in the browser.
 
 ## 📋 Notes
 
-- **No database** — scores are not persisted between sessions (yet!)
+- **No database** — high score is stored locally in `high_score.txt`
 - Requires **Python 3.10+**
 - Tested with **pygame-ce 2.5.7**

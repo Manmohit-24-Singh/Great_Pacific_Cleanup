@@ -30,7 +30,7 @@ class UI:
         self.last_lives = MAX_LIVES
 
     # ── HUD ──────────────────────────────────────────────
-    def draw_hud(self, player):
+    def draw_hud(self, player, high_score):
         """Floating HUD: no bar, elements sit directly on the ocean."""
 
         # ── Detect changes for animation triggers ──
@@ -60,6 +60,9 @@ class UI:
         # Main text
         score_surf = score_font.render(score_str, True, (100, 255, 200))
         self.surface.blit(score_surf, (15, 15))
+
+        hi_surf = self.small_font.render(f"HI {high_score}", True, (190, 220, 235))
+        self.surface.blit(hi_surf, (15, 48))
 
         # ── Hearts (top-right, with shake/flash on damage) ──
         for i in range(MAX_LIVES):
@@ -165,7 +168,7 @@ class UI:
             pygame.draw.polygon(self.surface, color, pts)
 
     # ── START SCREEN ─────────────────────────────────────
-    def draw_start_screen(self, time_elapsed):
+    def draw_start_screen(self, time_elapsed, high_score):
         self.surface.fill(OCEAN_DEEP)
 
         # Simple gradient (drawn once visually, not animated)
@@ -219,12 +222,15 @@ class UI:
             self.surface.blit(key_surf, (60, iy))
             self.surface.blit(desc_surf, (60 + key_surf.get_width(), iy))
 
+        hi = self.subtitle_font.render(f"HIGH SCORE: {high_score}", True, (120, 235, 200))
+        self.surface.blit(hi, (WINDOW_WIDTH // 2 - hi.get_width() // 2, box_y - 34))
+
         # Version line
         ver = self.small_font.render("v1.0  |  Save the Ocean", True, (80, 100, 120))
         self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 40))
 
     # ── GAME OVER ─────────────────────────────────────
-    def draw_game_over(self, score, time_elapsed):
+    def draw_game_over(self, score, high_score, time_elapsed):
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         self.surface.blit(overlay, (0, 0))
@@ -251,7 +257,14 @@ class UI:
         sc = self.title_font.render(str(score), True, (100, 255, 200))
         self.surface.blit(sc, (WINDOW_WIDTH // 2 - sc.get_width() // 2, by + 40))
 
+        hi_label = self.subtitle_font.render(f"HIGH SCORE: {high_score}", True, (120, 220, 255))
+        self.surface.blit(hi_label, (WINDOW_WIDTH // 2 - hi_label.get_width() // 2, by + box_h + 16))
+
+        if score == high_score and score > 0:
+            new_best = self.subtitle_font.render("NEW HIGH SCORE!", True, (255, 235, 120))
+            self.surface.blit(new_best, (WINDOW_WIDTH // 2 - new_best.get_width() // 2, by + box_h + 42))
+
         # Pulsing restart
         pulse = int(180 + 75 * math.sin(time_elapsed * 3))
         prompt = self.font.render("PRESS SPACE TO RESTART", True, (pulse, 255, pulse))
-        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 110))
+        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 130))

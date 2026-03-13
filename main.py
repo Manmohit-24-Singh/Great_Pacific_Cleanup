@@ -46,6 +46,10 @@ class Game:
         # Time tracking
         self.total_time = 0
 
+        # Persistent high score
+        self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
+        self.high_score = self._load_high_score()
+
         # State
         self.state = 'MENU'
         self.reset_game()
@@ -69,6 +73,21 @@ class Game:
                         self.reset_game()
                     elif self.state == 'GAMEOVER':
                         self.state = 'MENU'
+
+    def _load_high_score(self):
+        try:
+            with open(self.high_score_path, "r", encoding="utf-8") as f:
+                return max(0, int(f.read().strip() or 0))
+        except (FileNotFoundError, ValueError, OSError):
+            return 0
+
+    def _save_high_score(self):
+        try:
+            with open(self.high_score_path, "w", encoding="utf-8") as f:
+                f.write(str(self.high_score))
+        except OSError:
+            # Ignore write failures (e.g., read-only/web environments).
+            pass
 
     def update(self, dt):
         self.total_time += dt
@@ -97,6 +116,10 @@ class Game:
                 self.particles.emit_trail(self.player.pos.x, self.player.pos.y + 35, trail_color)
 
             self.check_collisions()
+
+            if self.player.score > self.high_score:
+                self.high_score = self.player.score
+                self._save_high_score()
 
             if self.player.lives <= 0:
                 self.state = 'GAMEOVER'
@@ -162,7 +185,7 @@ class Game:
             self.shake_amount *= 0.9
 
         if self.state == 'MENU':
-            self.ui.draw_start_screen(self.total_time)
+            self.ui.draw_start_screen(self.total_time, self.high_score)
         elif self.state == 'PLAYING':
             self._draw_ocean()
 
@@ -200,7 +223,7 @@ class Game:
                 ft.draw(render_surf)
 
             self.screen.blit(render_surf, (sx, sy))
-            self.ui.draw_hud(self.player)
+            self.ui.draw_hud(self.player, self.high_score)
 
         elif self.state == 'GAMEOVER':
             self._draw_ocean()
@@ -211,7 +234,7 @@ class Game:
             render_surf.blit(self.player.image, self.player.rect)
             self.particles.draw(render_surf)
             self.screen.blit(render_surf, (sx, sy))
-            self.ui.draw_game_over(self.player.score, self.total_time)
+            self.ui.draw_game_over(self.player.score, self.high_score, self.total_time)
 
     def _create_ocean_gradient(self):
         """Pre-render a smooth blue ocean gradient."""
