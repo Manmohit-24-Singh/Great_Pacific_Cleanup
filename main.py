@@ -12,6 +12,104 @@ from entities import PlasticWaste, MarineLife, Hazard, PowerUp
 from particles import ParticleSystem, Bubble, FloatingText
 
 
+class VirtualJoystick:
+
+    def __init__(self):
+        self.center = pygame.math.Vector2(JOYSTICK_X, JOYSTICK_Y)
+        self.knob = pygame.math.Vector2(self.center)
+        self.active = False
+        self.touch_id = None  # which finger is controlling this joystick
+
+    def handle_event(self, event):
+        # Works with both mouse (desktop fallback) and finger touch events
+        if event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN):
+            pos = self._get_pos(event)
+            if pos and self.center.distance_to(pos) < JOYSTICK_RADIUS * 1.5:
+                self.active = True
+                self.touch_id = getattr(event, 'fingerId', 0)
+                self._update_knob(pos)
+
+        elif event.type in (pygame.MOUSEMOTION, pygame.FINGERMOTION):
+            if self.active:
+                pos = self._get_pos(event)
+                if pos:
+                    self._update_knob(pos)
+
+        elif event.type in (pygame.MOUSEBUTTONUP, pygame.FINGERUP):
+            self.active = False
+            self.touch_id = None
+            self.knob = pygame.math.Vector2(self.center)
+
+    def _get_pos(self, event):
+        if event.type in (pygame.FINGERDOWN, pygame.FINGERMOTION, pygame.FINGERUP):
+            return pygame.math.Vector2(event.x * WINDOW_WIDTH, event.y * WINDOW_HEIGHT)
+        elif hasattr(event, 'pos'):
+            return pygame.math.Vector2(event.pos)
+        return None
+
+    def _update_knob(self, pos):
+        delta = pos - self.center
+        if delta.magnitude() > JOYSTICK_RADIUS:
+            delta = delta.normalize() * JOYSTICK_RADIUS
+        self.knob = self.center + delta
+
+    def get_direction(self):
+        """Returns a Vector2 from -1 to 1 on each axis."""
+        if not self.active:
+            return pygame.math.Vector2(0, 0)
+        delta = self.knob - self.center
+        if delta.magnitude() < 5:
+            return pygame.math.Vector2(0, 0)
+        return delta / JOYSTICK_RADIUS
+
+    def draw(self, surface):
+        # Outer ring
+        outer = pygame.Surface((JOYSTICK_RADIUS * 2 + 4, JOYSTICK_RADIUS * 2 + 4), pygame.SRCALPHA)
+        pygame.draw.circle(outer, (255, 255, 255, 40),
+                           (JOYSTICK_RADIUS + 2, JOYSTICK_RADIUS + 2), JOYSTICK_RADIUS, 2)
+        surface.blit(outer, (int(self.center.x) - JOYSTICK_RADIUS - 2,
+                              int(self.center.y) - JOYSTICK_RADIUS - 2))
+
+        # Knob
+        knob_surf = pygame.Surface((JOYSTICK_KNOB_RADIUS * 2, JOYSTICK_KNOB_RADIUS * 2), pygame.SRCALPHA)
+        pygame.draw.circle(knob_surf, (255, 255, 255, 120 if self.active else 60),
+                           (JOYSTICK_KNOB_RADIUS, JOYSTICK_KNOB_RADIUS), JOYSTICK_KNOB_RADIUS)
+        pygame.draw.circle(knob_surf, (255, 255, 255, 200 if self.active else 100),
+                           (JOYSTICK_KNOB_RADIUS, JOYSTICK_KNOB_RADIUS), JOYSTICK_KNOB_RADIUS, 2)
+        surface.blit(knob_surf, (int(self.knob.x) - JOYSTICK_KNOB_RADIUS,
+                                  int(self.knob.y) - JOYSTICK_KNOB_RADIUS))
+
+
+class TapButton:
+
+    def __init__(self, x, y, w, h, label):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.label = label
+        self.pressed = False
+        self.font = pygame.font.SysFont("impact", max(18, int(24 * SCALE)))
+
+    def handle_event(self, event):
+        pos = None
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = event.pos
+        elif event.type == pygame.FINGERDOWN:
+            pos = (int(event.x * WINDOW_WIDTH), int(event.y * WINDOW_HEIGHT))
+        if pos and self.rect.collidepoint(pos):
+            self.pressed = True
+            return True
+        return False
+
+    def draw(self, surface):
+        color = (40, 180, 220, 200)
+        btn = pygame.Surface((self.rect.w, self.rect.h), pygame.SRCALPHA)
+        pygame.draw.rect(btn, (20, 60, 100, 180), (0, 0, self.rect.w, self.rect.h), border_radius=12)
+        pygame.draw.rect(btn, (40, 180, 220, 180), (0, 0, self.rect.w, self.rect.h), 2, border_radius=12)
+        surface.blit(btn, self.rect.topleft)
+        txt = self.font.render(self.label, True, (100, 230, 255))
+        surface.blit(txt, (self.rect.centerx - txt.get_width() // 2,
+                            self.rect.centery - txt.get_height() // 2))
+
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -21,17 +119,13 @@ class Game:
         self.ui = UI(self.screen)
         self.particles = ParticleSystem()
 
-        # Ambient ocean bubbles
         self.bubbles = [Bubble() for _ in range(12)]
 
-        # Screen shake state
         self.shake_amount = 0
         self.shake_timer = 0
 
-        # Pre-cached blue gradient (no AI image)
         self.ocean_gradient = self._create_ocean_gradient()
 
-        # Pre-generate some wave line positions for animation
         self.wave_lines = []
         for i in range(20):
             self.wave_lines.append({
@@ -43,14 +137,20 @@ class Game:
                 'thickness': random.choice([1, 1, 2]),
             })
 
-        # Time tracking
         self.total_time = 0
 
-        # Persistent high score
         self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
         self.high_score = self._load_high_score()
 
-        # State
+        # Virtual joystick (always present, visible only during PLAYING)
+        self.joystick = VirtualJoystick()
+
+        # Tap buttons — anchored near bottom of screen, clear of all other UI
+        btn_w, btn_h = int(220 * SCALE), int(54 * SCALE)
+        bx = WINDOW_WIDTH // 2 - btn_w // 2
+        self.start_button = TapButton(bx, WINDOW_HEIGHT - int(110 * SCALE), btn_w, btn_h, "TAP TO PLAY")
+        self.restart_button = TapButton(bx, WINDOW_HEIGHT - int(110 * SCALE), btn_w, btn_h, "TAP TO RESTART")
+
         self.state = 'MENU'
         self.reset_game()
 
@@ -66,6 +166,8 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+
+            # Keyboard — still works on desktop
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     if self.state == 'MENU':
@@ -73,6 +175,20 @@ class Game:
                         self.reset_game()
                     elif self.state == 'GAMEOVER':
                         self.state = 'MENU'
+
+            # Touch/tap buttons on menu and game over
+            if self.state == 'MENU':
+                if self.start_button.handle_event(event):
+                    self.state = 'PLAYING'
+                    self.reset_game()
+
+            elif self.state == 'GAMEOVER':
+                if self.restart_button.handle_event(event):
+                    self.state = 'MENU'
+
+            # Joystick only active while playing
+            elif self.state == 'PLAYING':
+                self.joystick.handle_event(event)
 
     def _load_high_score(self):
         try:
@@ -86,7 +202,6 @@ class Game:
             with open(self.high_score_path, "w", encoding="utf-8") as f:
                 f.write(str(self.high_score))
         except OSError:
-            # Ignore write failures (e.g., read-only/web environments).
             pass
 
     def update(self, dt):
@@ -95,12 +210,14 @@ class Game:
         if self.state == 'PLAYING':
             current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
 
-            self.player.update(dt)
+            # Pass joystick direction into player update
+            joy_dir = self.joystick.get_direction()
+            self.player.update(dt, joystick_direction=joy_dir)
+
             self.spawner.update(dt, self.entities)
             self.entities.update(dt, current_scroll_speed)
             self.particles.update(dt)
 
-            # Update floating score texts
             for ft in self.floating_texts:
                 ft.update(dt)
             self.floating_texts = [ft for ft in self.floating_texts if ft.alive]
@@ -108,7 +225,6 @@ class Game:
             for b in self.bubbles:
                 b.update(dt, current_scroll_speed)
 
-            # Player wake trail
             self.player.trail_timer += dt
             if self.player.trail_timer > 0.06:
                 self.player.trail_timer = 0
@@ -134,6 +250,10 @@ class Game:
                 self.shake_timer -= dt
                 if self.shake_timer <= 0:
                     self.shake_amount = 0
+
+        # Reset button pressed states each frame
+        self.start_button.pressed = False
+        self.restart_button.pressed = False
 
     def check_collisions(self):
         collect_radius = 100 if self.player.eco_net_active else 65
@@ -164,11 +284,10 @@ class Game:
                         hit = self.player.take_damage(1)
                         if hit:
                             self.particles.emit_damage(self.player.pos.x, self.player.pos.y)
-                            # Collision-type-specific shake intensity
                             if isinstance(ent, Hazard):
                                 self.shake_amount = 15
                                 self.shake_timer = 0.5
-                            else:  # MarineLife — lighter hit
+                            else:
                                 self.shake_amount = 5
                                 self.shake_timer = 0.2
                             if isinstance(ent, Hazard) and ent.hazard_type == 'oil':
@@ -186,9 +305,10 @@ class Game:
 
         if self.state == 'MENU':
             self.ui.draw_start_screen(self.total_time, self.high_score)
+            self.start_button.draw(self.screen)
+
         elif self.state == 'PLAYING':
             self._draw_ocean()
-
             render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
             for b in self.bubbles:
@@ -196,7 +316,6 @@ class Game:
 
             self.entities.draw(render_surf)
 
-            # Sonar highlight
             if self.player.sonar_timer > 0:
                 pulse = int(40 + 20 * math.sin(self.total_time * 6))
                 for ent in self.entities:
@@ -205,25 +324,24 @@ class Game:
                         pygame.draw.circle(glow, (255, 255, 0, pulse), (30, 30), 30, 2)
                         render_surf.blit(glow, (int(ent.pos.x) - 30, int(ent.pos.y) - 30))
 
-            # Eco net radius
             if self.player.eco_net_active:
                 pulse = int(25 + 15 * math.sin(self.total_time * 4))
                 net_glow = pygame.Surface((140, 140), pygame.SRCALPHA)
                 pygame.draw.circle(net_glow, (0, 255, 255, pulse), (70, 70), 65, 2)
                 render_surf.blit(net_glow, (int(self.player.pos.x) - 70, int(self.player.pos.y) - 70))
 
-            # Buff icons orbiting near the player
             self.ui.draw_buff_icons_near_player(self.player, render_surf)
-
             render_surf.blit(self.player.image, self.player.rect)
             self.particles.draw(render_surf)
 
-            # Floating score text
             for ft in self.floating_texts:
                 ft.draw(render_surf)
 
             self.screen.blit(render_surf, (sx, sy))
             self.ui.draw_hud(self.player, self.high_score)
+
+            # Draw virtual joystick on top of everything
+            self.joystick.draw(self.screen)
 
         elif self.state == 'GAMEOVER':
             self._draw_ocean()
@@ -235,9 +353,9 @@ class Game:
             self.particles.draw(render_surf)
             self.screen.blit(render_surf, (sx, sy))
             self.ui.draw_game_over(self.player.score, self.high_score, self.total_time)
+            self.restart_button.draw(self.screen)
 
     def _create_ocean_gradient(self):
-        """Pre-render a smooth blue ocean gradient."""
         surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         for y in range(WINDOW_HEIGHT):
             ratio = y / WINDOW_HEIGHT
@@ -248,12 +366,9 @@ class Game:
         return surf
 
     def _draw_ocean(self):
-        """Draw the animated ocean: gradient + scrolling wave lines + caustics."""
         self.screen.blit(self.ocean_gradient, (0, 0))
-
         wave_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
-        # Animated wave lines that scroll with gameplay
         for wl in self.wave_lines:
             y = (wl['y_base'] + int(self.scroll_y * 0.6)) % (WINDOW_HEIGHT + 100) - 50
             points = []
@@ -264,7 +379,6 @@ class Game:
                 pygame.draw.lines(wave_surf, (180, 220, 255, wl['alpha']),
                                   False, points, wl['thickness'])
 
-        # Light caustic shimmer (subtle bright spots)
         for i in range(8):
             cx = int((math.sin(self.total_time * 0.3 + i * 1.7) * 0.5 + 0.5) * WINDOW_WIDTH)
             cy = int((math.sin(self.total_time * 0.4 + i * 2.1) * 0.5 + 0.5) * WINDOW_HEIGHT)
