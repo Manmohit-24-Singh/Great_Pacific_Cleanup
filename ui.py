@@ -2,6 +2,7 @@
 import pygame
 import math
 from settings import *
+from entities import *
 
 
 class UI:
@@ -123,38 +124,48 @@ class UI:
     def _draw_active_powerups(self, player):
         """Draw active powerup icons with timers at the top center of the HUD."""
         active = []
+
         if player.speed_boost_timer > 0:
-            active.append(('⚡', POWERUP_COLORS['turbo'], player.speed_boost_timer, 5.0))
+            active.append(('turbo', POWERUP_COLORS['turbo'], player.speed_boost_timer, 5.0))
+
         if player.shield_active:
-            active.append(('🛡', POWERUP_COLORS['shield'], 1.0, 1.0))  # shield has no timer, always full
+            active.append(('shield', POWERUP_COLORS['shield'], 1.0, 1.0))
+
         if player.eco_net_active:
-            active.append(('🌐', POWERUP_COLORS['eco_net'], player.eco_net_timer, 8.0))
+            active.append(('eco_net', POWERUP_COLORS['eco_net'], player.eco_net_timer, 8.0))
+
         if player.sonar_timer > 0:
-            active.append(('📡', POWERUP_COLORS['sonar'], player.sonar_timer, 6.0))
+            active.append(('sonar', POWERUP_COLORS['sonar'], player.sonar_timer, 6.0))
 
         if not active:
             return
 
-        total_w = len(active) * 55
+        total_w = len(active) * 75
         start_x = (WINDOW_WIDTH - total_w) // 2
 
-        for i, (label, color, remaining, max_time) in enumerate(active):
-            x = start_x + i * 55
+        for i, (icon_key, color, remaining, max_time) in enumerate(active):
+            x = start_x + i * 75
             y = 10
 
-            # Background pill
-            pill = pygame.Surface((50, 26), pygame.SRCALPHA)
-            pygame.draw.rect(pill, (*color[:3], 60), (0, 0, 50, 26), border_radius=6)
-            pygame.draw.rect(pill, (*color[:3], 180), (0, 0, 50, 26), 2, border_radius=6)
+            # Bigger background pill
+            pill = pygame.Surface((70, 40), pygame.SRCALPHA)
+            pygame.draw.rect(pill, (*color[:3], 60), (0, 0, 70, 40), border_radius=8)
+            pygame.draw.rect(pill, (*color[:3], 180), (0, 0, 70, 40), 2, border_radius=8)
             self.surface.blit(pill, (x, y))
 
             # Timer bar
-            bar_w = int(44 * (remaining / max_time))
-            pygame.draw.rect(self.surface, (*color[:3], 200), (x + 3, y + 19, bar_w, 4), border_radius=2)
+            bar_w = int(64 * (remaining / max_time))
+            pygame.draw.rect(self.surface, (*color[:3], 200),
+                            (x + 3, y + 32, bar_w, 5), border_radius=2)
 
-            # Label
-            txt = self.small_font.render(label, True, WHITE)
-            self.surface.blit(txt, (x + 5, y + 2))
+            # Load icon using the PowerUp class mapping
+            filename = PowerUp.POWERUP_IMAGES.get(icon_key)
+            if filename:
+                try:
+                    icon = load_image(filename, scale=(30, 30))
+                    self.surface.blit(icon, (x + 20, y + 3))
+                except:
+                    pass
 
     def _draw_heart(self, x, y, size, color):
         s = size
