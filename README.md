@@ -92,3 +92,42 @@ Navigate to `http://localhost:8000/` to play in the browser.
 - **No database** — high score is stored locally in `high_score.txt`
 - Requires **Python 3.10+**
 - Tested with **pygame-ce 2.5.7**
+
+## Running on Mobile
+
+This branch includes mobile support via a virtual joystick
+
+### Prerequisites
+- Python 3.x
+- pygame: `pip install pygame`
+- pygbag: `pip install pygbag`
+
+### Steps
+
+**1. Build the web version:**
+```
+python -m pygbag --build main.py
+```
+
+**2. Serve it on your local network:**
+```
+cd build/web && python3 -m http.server 8000 --bind 0.0.0.0
+```
+
+**3. Find your computer's local IP address:**
+- Mac: `ipconfig getifaddr en0`
+- Windows: run `ipconfig` and look for IPv4 Address
+
+**4. Open on your phone:**
+- Make sure your phone is on the same WiFi as your computer
+- Open Safari or Chrome and go to `http://YOUR_IP:8000`
+
+### Controls
+- **Desktop** — WASD or arrow keys
+- **Mobile** — Virtual joystick in the bottom-right corner
+
+### Notes
+- The game may take 10-20 seconds to load in the browser on first run
+- If `en0` gives no result on Mac, try `ipconfig getifaddr en1`
+```
+
