@@ -95,31 +95,37 @@ class UI:
         self._draw_active_powerups(player)
 
     def draw_buff_icons_near_player(self, player, surface):
-        """Draw small buff indicators orbiting near the player instead of at the HUD."""
-        icons = []
-        if player.speed_boost_timer > 0:
-            icons.append(POWERUP_COLORS['turbo'])
-        if player.shield_active:
-            icons.append(POWERUP_COLORS['shield'])
-        if player.eco_net_active:
-            icons.append(POWERUP_COLORS['eco_net'])
-        if player.sonar_timer > 0:
-            icons.append(POWERUP_COLORS['sonar'])
+        """Draw small buff icons orbiting near the player instead of at the HUD."""
+        active_buffs = []
 
-        if not icons:
+        if player.speed_boost_timer > 0:
+            active_buffs.append('turbo')
+        if player.shield_active:
+            active_buffs.append('shield')
+        if player.eco_net_active:
+            active_buffs.append('eco_net')
+        if player.sonar_timer > 0:
+            active_buffs.append('sonar')
+
+        if not active_buffs:
             return
 
         t = pygame.time.get_ticks() / 1000.0
-        for i, color in enumerate(icons):
-            angle = t * 2 + i * (math.pi * 2 / len(icons))
-            radius = 45
+        radius = 45
+
+        for i, buff_key in enumerate(active_buffs):
+            angle = t * 2 + i * (math.pi * 2 / len(active_buffs))
             ix = int(player.pos.x + math.cos(angle) * radius)
             iy = int(player.pos.y + math.sin(angle) * radius)
-            # Small glowing dot
-            glow = pygame.Surface((16, 16), pygame.SRCALPHA)
-            pygame.draw.circle(glow, (*color[:3], 120), (8, 8), 8)
-            pygame.draw.circle(glow, (*color[:3], 220), (8, 8), 4)
-            surface.blit(glow, (ix - 8, iy - 8))
+
+            # Load the icon PNG
+            filename = PowerUp.POWERUP_IMAGES.get(buff_key)
+            if filename:
+                try:
+                    icon = load_image(filename, scale=(20, 20))  # plain icon, no tint
+                    surface.blit(icon, (ix - icon.get_width() // 2, iy - icon.get_height() // 2))
+                except Exception as e:
+                    print(f"Failed to load buff icon {buff_key}: {e}")
 
     def _draw_active_powerups(self, player):
         """Draw active powerup icons with timers at the top center of the HUD."""
