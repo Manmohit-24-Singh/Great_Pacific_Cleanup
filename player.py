@@ -113,11 +113,10 @@ class Player(pygame.sprite.Sprite):
         if self.speed_boost_timer > 0:
             w, h = self.image.get_size()
             glow = pygame.Surface((w, h), pygame.SRCALPHA)
-            pulse = int(30 + 20 * math.sin(pygame.time.get_ticks() / 100))
-            glow.fill((255, 100, 255, pulse))
+            pulse = int(100 + 55 * math.sin(pygame.time.get_ticks() / 200))  # 100–155 alpha
+            glow.fill((255, 40, 200, pulse))
+            glow.blit(self.image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             self.image.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-
-        self.rect = self.image.get_rect(center=self.pos)
 
     def apply_powerup(self, p_type):
         if p_type == 'eco_net':
