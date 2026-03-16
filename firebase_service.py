@@ -23,7 +23,7 @@ class FirebaseService:
             self.user = user
             self.id_token = user['idToken']
             
-            # Create user profile in Firestore
+            # Create user profile in the Firestore
             self._update_user_profile(user['localId'], username)
             return {"success": True, "user": user, "username": username}
         except Exception as e:
@@ -36,7 +36,7 @@ class FirebaseService:
             self.user = user
             self.id_token = user['idToken']
             
-            # Fetch username
+            # Get username from user
             username = self._get_username(user['localId'])
             return {"success": True, "user": user, "username": username}
         except Exception as e:
