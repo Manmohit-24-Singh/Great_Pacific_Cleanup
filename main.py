@@ -10,6 +10,7 @@ from spawner import Spawner
 from ui import UI
 from entities import PlasticWaste, MarineLife, Hazard, PowerUp
 from particles import ParticleSystem, Bubble, FloatingText
+from firebase_service import FirebaseService
 
 
 class Game:
@@ -20,6 +21,17 @@ class Game:
         self.clock = pygame.time.Clock()
         self.ui = UI(self.screen)
         self.particles = ParticleSystem()
+        self.firebase = FirebaseService()
+        self.logged_in_user = None
+        self.username = "Guest"
+
+        # Auth Input State
+        self.auth_email = ""
+        self.auth_password = ""
+        self.auth_username = ""
+        self.auth_error = ""
+        self.auth_loading = False
+        self.leaderboard_data = []
 
         # Ambient ocean bubbles
         self.bubbles = [Bubble() for _ in range(12)]
@@ -66,13 +78,115 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+            
+            if self.state in ['LOGIN', 'SIGNUP']:
+                self._handle_auth_events(event)
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self._handle_auth_clicks(event.pos)
+                continue
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     if self.state == 'MENU':
-                        self.state = 'PLAYING'
-                        self.reset_game()
+                        if self.logged_in_user:
+                            self.state = 'PLAYING'
+                            self.reset_game()
+                        else:
+                            self.state = 'LOGIN'
+                            self.ui.input_active = 'email'
                     elif self.state == 'GAMEOVER':
                         self.state = 'MENU'
+                elif event.key == pygame.K_l and self.state == 'MENU':
+                    self.state = 'LEADERBOARD'
+                    self.leaderboard_data = self.firebase.get_leaderboard()
+                elif event.key == pygame.K_o and self.state == 'MENU' and self.logged_in_user:
+                    self.firebase.logout()
+                    self.logged_in_user = None
+                    self.username = "Guest"
+                elif event.key == pygame.K_ESCAPE and self.state == 'LEADERBOARD':
+                    self.state = 'MENU'
+
+    def _handle_auth_clicks(self, pos):
+        # Check input fields
+        if self.state == 'LOGIN':
+            if pygame.Rect(150, 200, 300, 40).collidepoint(pos): self.ui.input_active = 'email'
+            elif pygame.Rect(150, 300, 300, 40).collidepoint(pos): self.ui.input_active = 'password'
+        else:
+            if pygame.Rect(150, 180, 300, 40).collidepoint(pos): self.ui.input_active = 'username'
+            elif pygame.Rect(150, 270, 300, 40).collidepoint(pos): self.ui.input_active = 'email'
+            elif pygame.Rect(150, 360, 300, 40).collidepoint(pos): self.ui.input_active = 'password'
+
+        # Check buttons
+        if self.ui.auth_submit_rect.collidepoint(pos):
+            if self.state == 'LOGIN': self._perform_login()
+            else: self._perform_signup()
+        
+        if self.ui.auth_switch_rect.collidepoint(pos):
+            if self.state == 'LOGIN':
+                self.state = 'SIGNUP'
+                self.ui.input_active = 'username'
+                self.auth_error = ""
+            else:
+                self.state = 'LOGIN'
+                self.ui.input_active = 'email'
+                self.auth_error = ""
+
+    def _handle_auth_events(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_TAB:
+                # Cycle between fields
+                if self.state == 'LOGIN':
+                    self.ui.input_active = 'password' if self.ui.input_active == 'email' else 'email'
+                else:
+                    fields = ['username', 'email', 'password']
+                    idx = (fields.index(self.ui.input_active) + 1) % 3
+                    self.ui.input_active = fields[idx]
+            
+            elif event.key == pygame.K_RETURN:
+                if self.state == 'LOGIN':
+                    self._perform_login()
+                else:
+                    self._perform_signup()
+            
+            elif event.key == pygame.K_BACKSPACE:
+                if self.ui.input_active == 'email': self.auth_email = self.auth_email[:-1]
+                elif self.ui.input_active == 'password': self.auth_password = self.auth_password[:-1]
+                elif self.ui.input_active == 'username': self.auth_username = self.auth_username[:-1]
+            
+            elif event.key == pygame.K_ESCAPE:
+                self.state = 'MENU'
+            
+            else:
+                if event.unicode.isprintable() and event.unicode != '\r' and event.unicode != '\t':
+                    if self.ui.input_active == 'email': self.auth_email += event.unicode
+                    elif self.ui.input_active == 'password': self.auth_password += event.unicode
+                    elif self.ui.input_active == 'username': self.auth_username += event.unicode
+
+    def _perform_login(self):
+        self.auth_loading = True
+        self.auth_error = ""
+        res = self.firebase.login(self.auth_email, self.auth_password)
+        self.auth_loading = False
+        if res['success']:
+            self.logged_in_user = res['user']
+            self.username = res['username']
+            self.state = 'MENU'
+            # Sync local high score if needed or fetch from DB
+        else:
+            self.auth_error = res['error']
+
+    def _perform_signup(self):
+        self.auth_loading = True
+        self.auth_error = ""
+        res = self.firebase.sign_up(self.auth_email, self.auth_password, self.auth_username)
+        self.auth_loading = False
+        if res['success']:
+            self.logged_in_user = res['user']
+            self.username = res['username']
+            self.state = 'MENU'
+        else:
+            self.auth_error = res['error']
+
 
     def _load_high_score(self):
         try:
@@ -125,6 +239,8 @@ class Game:
                 self.state = 'GAMEOVER'
                 self.shake_amount = 10
                 self.shake_timer = 0.4
+                if self.logged_in_user:
+                    self.firebase.update_high_score(self.high_score)
 
             self.scroll_y += current_scroll_speed * dt
             if self.scroll_y > WINDOW_HEIGHT:
@@ -185,7 +301,13 @@ class Game:
             self.shake_amount *= 0.9
 
         if self.state == 'MENU':
-            self.ui.draw_start_screen(self.total_time, self.high_score)
+            self.ui.draw_start_screen(self.total_time, self.high_score, self.logged_in_user, self.username)
+        elif self.state == 'LOGIN':
+            self.ui.draw_login_screen(self.auth_email, self.auth_password, self.auth_error, self.auth_loading)
+        elif self.state == 'SIGNUP':
+            self.ui.draw_signup_screen(self.auth_email, self.auth_password, self.auth_username, self.auth_error, self.auth_loading)
+        elif self.state == 'LEADERBOARD':
+            self.ui.draw_leaderboard_screen(self.leaderboard_data)
         elif self.state == 'PLAYING':
             self._draw_ocean()
 

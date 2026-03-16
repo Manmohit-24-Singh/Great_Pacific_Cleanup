@@ -29,6 +29,16 @@ class UI:
         self.heart_flash_timer = 0.0  # counts down; >0 means a life was just lost
         self.last_lives = MAX_LIVES
 
+        # UI Input State
+        self.input_text = ""
+        self.input_active = None # 'email', 'password', 'username'
+        self.error_msg = ""
+        self.loading = False
+
+        # Button Rects for interaction
+        self.auth_submit_rect = pygame.Rect(0, 0, 0, 0)
+        self.auth_switch_rect = pygame.Rect(0, 0, 0, 0)
+
     # ── HUD ──────────────────────────────────────────────
     def draw_hud(self, player, high_score):
         """Floating HUD: no bar, elements sit directly on the ocean."""
@@ -167,68 +177,6 @@ class UI:
         if len(pts) > 2:
             pygame.draw.polygon(self.surface, color, pts)
 
-    # ── START SCREEN ─────────────────────────────────────
-    def draw_start_screen(self, time_elapsed, high_score):
-        self.surface.fill(OCEAN_DEEP)
-
-        # Simple gradient (drawn once visually, not animated)
-        for y in range(0, WINDOW_HEIGHT, 4):
-            ratio = y / WINDOW_HEIGHT
-            r = int(5 + 15 * ratio)
-            g = int(25 + 75 * ratio)
-            b = int(55 + 100 * ratio)
-            pygame.draw.line(self.surface, (r, g, b), (0, y), (WINDOW_WIDTH, y))
-
-        # Title with shadow
-        title_text = "GREAT PACIFIC"
-        title2_text = "CLEANUP"
-
-        shadow = self.title_font.render(title_text, True, (0, 0, 0))
-        title_surf = self.title_font.render(title_text, True, (80, 220, 255))
-        tx = WINDOW_WIDTH // 2 - title_surf.get_width() // 2
-        ty = WINDOW_HEIGHT // 4
-        self.surface.blit(shadow, (tx + 2, ty + 2))
-        self.surface.blit(title_surf, (tx, ty))
-
-        shadow2 = self.title_font.render(title2_text, True, (0, 0, 0))
-        title2_surf = self.title_font.render(title2_text, True, (40, 255, 180))
-        tx2 = WINDOW_WIDTH // 2 - title2_surf.get_width() // 2
-        self.surface.blit(shadow2, (tx2 + 2, ty + 62))
-        self.surface.blit(title2_surf, (tx2, ty + 60))
-
-        # Pulsing "Press SPACE" prompt
-        pulse = int(180 + 75 * math.sin(time_elapsed * 3))
-        prompt = self.font.render("PRESS SPACE TO BEGIN", True, (pulse, 255, pulse))
-        px = WINDOW_WIDTH // 2 - prompt.get_width() // 2
-        self.surface.blit(prompt, (px, WINDOW_HEIGHT // 2 + 40))
-
-        # Instructions box
-        box_y = WINDOW_HEIGHT // 2 + 100
-        box = pygame.Surface((WINDOW_WIDTH - 80, 180), pygame.SRCALPHA)
-        box.fill((10, 20, 40, 160))
-        pygame.draw.rect(box, (40, 180, 220, 100), (0, 0, WINDOW_WIDTH - 80, 180), 1, border_radius=8)
-        self.surface.blit(box, (40, box_y))
-
-        instructions = [
-            ("Arrow Keys / WASD", "Move your cleanup vessel"),
-            ("Collect Plastic", "Score points + biofuel boost"),
-            ("Avoid Marine Life", "Collisions reduce your lives"),
-            ("Grab Power-ups", "Shield, Turbo, Sonar, Eco Net"),
-        ]
-        for i, (key, desc) in enumerate(instructions):
-            iy = box_y + 15 + i * 40
-            key_surf = self.small_font.render(key, True, (100, 220, 255))
-            desc_surf = self.small_font.render(f"  -  {desc}", True, (200, 210, 220))
-            self.surface.blit(key_surf, (60, iy))
-            self.surface.blit(desc_surf, (60 + key_surf.get_width(), iy))
-
-        hi = self.subtitle_font.render(f"HIGH SCORE: {high_score}", True, (120, 235, 200))
-        self.surface.blit(hi, (WINDOW_WIDTH // 2 - hi.get_width() // 2, box_y - 34))
-
-        # Version line
-        ver = self.small_font.render("v1.0  |  Save the Ocean", True, (80, 100, 120))
-        self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 40))
-
     # ── GAME OVER ─────────────────────────────────────
     def draw_game_over(self, score, high_score, time_elapsed):
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
@@ -268,3 +216,217 @@ class UI:
         pulse = int(180 + 75 * math.sin(time_elapsed * 3))
         prompt = self.font.render("PRESS SPACE TO RESTART", True, (pulse, 255, pulse))
         self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 130))
+
+    # ── START SCREEN ─────────────────────────────────────
+    def draw_start_screen(self, time_elapsed, high_score, logged_in=False, username=""):
+        self.surface.fill(OCEAN_DEEP)
+
+        # Simple gradient (drawn once visually, not animated)
+        for y in range(0, WINDOW_HEIGHT, 4):
+            ratio = y / WINDOW_HEIGHT
+            r = int(5 + 15 * ratio)
+            g = int(25 + 75 * ratio)
+            b = int(55 + 100 * ratio)
+            pygame.draw.line(self.surface, (r, g, b), (0, y), (WINDOW_WIDTH, y))
+
+        # Title with shadow
+        title_text = "GREAT PACIFIC"
+        title2_text = "CLEANUP"
+
+        shadow = self.title_font.render(title_text, True, (0, 0, 0))
+        title_surf = self.title_font.render(title_text, True, (80, 220, 255))
+        tx = WINDOW_WIDTH // 2 - title_surf.get_width() // 2
+        ty = WINDOW_HEIGHT // 6
+        self.surface.blit(shadow, (tx + 2, ty + 2))
+        self.surface.blit(title_surf, (tx, ty))
+
+        shadow2 = self.title_font.render(title2_text, True, (0, 0, 0))
+        title2_surf = self.title_font.render(title2_text, True, (40, 255, 180))
+        tx2 = WINDOW_WIDTH // 2 - title2_surf.get_width() // 2
+        self.surface.blit(shadow2, (tx2 + 2, ty + 62))
+        self.surface.blit(title2_surf, (tx2, ty + 60))
+
+        # High score display (below title)
+        hi = self.subtitle_font.render(f"PERSONAL BEST: {high_score}", True, (120, 235, 200))
+        self.surface.blit(hi, (WINDOW_WIDTH // 2 - hi.get_width() // 2, ty + 130))
+
+        # Pulsing "Press SPACE" prompt
+        mid_y = WINDOW_HEIGHT // 2
+        box_y = mid_y + 110 # Push box further down
+
+        pulse = int(180 + 75 * math.sin(time_elapsed * 3))
+        prompt_text = "PRESS SPACE TO BEGIN" if logged_in else "PRESS SPACE TO LOGIN"
+        prompt = self.font.render(prompt_text, True, (pulse, 255, pulse))
+        px = WINDOW_WIDTH // 2 - prompt.get_width() // 2
+        self.surface.blit(prompt, (px, mid_y + 10))
+
+        if logged_in:
+            leader_txt = self.subtitle_font.render("Press 'L' for World Leaderboard", True, (255, 255, 100))
+            self.surface.blit(leader_txt, (WINDOW_WIDTH // 2 - leader_txt.get_width() // 2, mid_y + 45))
+            
+            logout_txt = self.small_font.render("Press 'O' to Logout", True, (200, 100, 100))
+            self.surface.blit(logout_txt, (WINDOW_WIDTH // 2 - logout_txt.get_width() // 2, mid_y + 75))
+
+            user_txt = self.small_font.render(f"Logged in as: {username}", True, (200, 255, 200))
+            self.surface.blit(user_txt, (10, WINDOW_HEIGHT - 30))
+
+        # Instructions box
+        box = pygame.Surface((WINDOW_WIDTH - 80, 160), pygame.SRCALPHA)
+        box.fill((10, 20, 40, 160))
+        pygame.draw.rect(box, (40, 180, 220, 100), (0, 0, WINDOW_WIDTH - 80, 160), 1, border_radius=8)
+        self.surface.blit(box, (40, box_y))
+
+        instructions = [
+            ("Arrow Keys / WASD", "Move your cleanup vessel"),
+            ("Collect Plastic", "Score points + biofuel boost"),
+            ("Avoid Marine Life", "Collisions reduce your lives"),
+            ("Grab Power-ups", "Shield, Turbo, Sonar, Eco Net"),
+        ]
+        for i, (key, desc) in enumerate(instructions):
+            iy = box_y + 12 + i * 36
+            key_surf = self.small_font.render(key, True, (100, 220, 255))
+            desc_surf = self.small_font.render(f"  -  {desc}", True, (200, 210, 220))
+            self.surface.blit(key_surf, (60, iy))
+            self.surface.blit(desc_surf, (60 + key_surf.get_width(), iy))
+
+        # Version line
+        ver = self.small_font.render("v1.0  |  Save the Ocean", True, (80, 100, 120))
+        self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 25))
+
+    # ── AUTH SCREENS ─────────────────────────────────────
+    def draw_login_screen(self, email, password, error, loading):
+        self.surface.fill(OCEAN_DEEP)
+        self._draw_auth_background()
+
+        title = self.title_font.render("LOGIN", True, WHITE)
+        self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 100))
+
+        # Email Field
+        self._draw_input_field("Email", email, 200, self.input_active == 'email')
+        # Password Field (masked)
+        self._draw_input_field("Password", "*" * len(password), 300, self.input_active == 'password')
+
+        if error:
+            err_surf = self.small_font.render(error, True, (255, 100, 100))
+            self.surface.blit(err_surf, (WINDOW_WIDTH // 2 - err_surf.get_width() // 2, 380))
+
+        if loading:
+            load_surf = self.font.render("Logging in...", True, (200, 200, 200))
+            self.surface.blit(load_surf, (WINDOW_WIDTH // 2 - load_surf.get_width() // 2, 420))
+        else:
+            # Login Button
+            self.auth_submit_rect = pygame.Rect(WINDOW_WIDTH // 2 - 100, 440, 200, 50)
+            self._draw_button("LOGIN", self.auth_submit_rect, (100, 255, 100))
+
+        # Switch to Signup Button
+        self.auth_switch_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 520, 240, 40)
+        self._draw_button("GO TO SIGN UP", self.auth_switch_rect, (150, 150, 255), small=True)
+
+    def draw_signup_screen(self, email, password, username, error, loading):
+        self.surface.fill(OCEAN_DEEP)
+        self._draw_auth_background()
+
+        title = self.title_font.render("SIGN UP", True, WHITE)
+        self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 80))
+
+        self._draw_input_field("Username", username, 180, self.input_active == 'username')
+        self._draw_input_field("Email", email, 270, self.input_active == 'email')
+        self._draw_input_field("Password", "*" * len(password), 360, self.input_active == 'password')
+
+        if error:
+            err_surf = self.small_font.render(error, True, (255, 100, 100))
+            self.surface.blit(err_surf, (WINDOW_WIDTH // 2 - err_surf.get_width() // 2, 430))
+
+        if loading:
+            load_surf = self.font.render("Creating Account...", True, (200, 200, 200))
+            self.surface.blit(load_surf, (WINDOW_WIDTH // 2 - load_surf.get_width() // 2, 470))
+        else:
+            # Signup Button
+            self.auth_submit_rect = pygame.Rect(WINDOW_WIDTH // 2 - 100, 490, 200, 50)
+            self._draw_button("SIGN UP", self.auth_submit_rect, (100, 255, 100))
+
+        # Switch to Login Button
+        self.auth_switch_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 570, 240, 40)
+        self._draw_button("BACK TO LOGIN", self.auth_switch_rect, (150, 150, 255), small=True)
+
+    def _draw_auth_background(self):
+        for y in range(0, WINDOW_HEIGHT, 4):
+            ratio = y / WINDOW_HEIGHT
+            r = int(5 + 10 * ratio)
+            g = int(20 + 40 * ratio)
+            b = int(40 + 60 * ratio)
+            pygame.draw.line(self.surface, (r, g, b), (0, y), (WINDOW_WIDTH, y))
+
+    def _draw_input_field(self, label, value, y, active):
+        lbl = self.small_font.render(label, True, (200, 200, 200))
+        self.surface.blit(lbl, (150, y - 25))
+        
+        box_color = (60, 120, 255) if active else (40, 60, 80)
+        pygame.draw.rect(self.surface, box_color, (150, y, 300, 40), 2, border_radius=5)
+        
+        txt = self.font.render(value, True, WHITE)
+        self.surface.blit(txt, (160, y + 5))
+        
+        if active and (pygame.time.get_ticks() // 500) % 2 == 0:
+            cursor_x = 160 + txt.get_width() + 2
+            pygame.draw.line(self.surface, WHITE, (cursor_x, y + 8), (cursor_x, y + 32), 2)
+
+    def _draw_button(self, text, rect, color, small=False):
+        mouse_pos = pygame.mouse.get_pos()
+        hover = rect.collidepoint(mouse_pos)
+        
+        # Draw shadow
+        pygame.draw.rect(self.surface, BLACK, (rect.x + 3, rect.y + 3, rect.width, rect.height), border_radius=10)
+        
+        # Draw main box
+        btn_color = [min(255, c + 30) if hover else c for c in color]
+        pygame.draw.rect(self.surface, btn_color, rect, border_radius=10)
+        pygame.draw.rect(self.surface, WHITE, rect, 2, border_radius=10)
+        
+        # Draw text
+        font = self.subtitle_font if small else self.font
+        txt = font.render(text, True, BLACK if hover else WHITE)
+        self.surface.blit(txt, (rect.centerx - txt.get_width() // 2, rect.centery - txt.get_height() // 2))
+
+    # ── LEADERBOARD SCREEN ────────────────────────────────
+    def draw_leaderboard_screen(self, leaderboard, user_score=None):
+        self.surface.fill(OCEAN_DEEP)
+        self._draw_auth_background()
+
+        title = self.title_font.render("WORLD LEADERBOARD", True, (255, 235, 120))
+        self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 50))
+
+        # Table Header
+        header_y = 150
+        pygame.draw.line(self.surface, (100, 200, 255), (80, header_y + 35), (WINDOW_WIDTH - 80, header_y + 35), 2)
+        
+        rank_h = self.subtitle_font.render("RANK", True, (150, 150, 150))
+        name_h = self.subtitle_font.render("PLAYER", True, (150, 150, 150))
+        score_h = self.subtitle_font.render("SCORE", True, (150, 150, 150))
+        
+        self.surface.blit(rank_h, (100, header_y))
+        self.surface.blit(name_h, (200, header_y))
+        self.surface.blit(score_h, (WINDOW_WIDTH - 180, header_y))
+
+        if not leaderboard:
+            msg = self.font.render("Loading...", True, WHITE)
+            self.surface.blit(msg, (WINDOW_WIDTH // 2 - msg.get_width() // 2, WINDOW_HEIGHT // 2))
+        else:
+            for i, entry in enumerate(leaderboard):
+                y = 200 + i * 40
+                color = (255, 255, 255)
+                if i == 0: color = (255, 215, 0) # Gold
+                elif i == 1: color = (192, 192, 192) # Silver
+                elif i == 2: color = (205, 127, 50) # Bronze
+                
+                rank = self.font.render(f"#{i+1}", True, color)
+                name = self.font.render(entry['username'], True, color)
+                score = self.font.render(str(entry['score']), True, color)
+                
+                self.surface.blit(rank, (100, y))
+                self.surface.blit(name, (200, y))
+                self.surface.blit(score, (WINDOW_WIDTH - 180, y))
+
+        prompt = self.subtitle_font.render("PRESS ESC TO RETURN TO MENU", True, (100, 255, 180))
+        px = WINDOW_WIDTH // 2 - prompt.get_width() // 2
+        self.surface.blit(prompt, (px, WINDOW_HEIGHT - 80))
