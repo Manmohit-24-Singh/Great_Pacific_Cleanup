@@ -48,6 +48,12 @@ venv\Scripts\activate
 pip install pygame-ce pygbag
 ```
 
+> **Note:**  
+> If you encounter a `ModuleNotFoundError: No module named 'pyrebase'`, install it with:
+> ```
+> pip install pyrebase4
+> ```
+
 ### 5. Run the game
 
 ```bash
