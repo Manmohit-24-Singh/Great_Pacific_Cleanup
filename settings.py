@@ -36,7 +36,6 @@ HAZARD_COLORS = {
 }
 POWERUP_COLORS = {
     'eco_net': (0, 255, 255),
-    'sonar': (255, 255, 0),
     'turbo': (255, 0, 255),
     'shield': (0, 255, 127)
 }

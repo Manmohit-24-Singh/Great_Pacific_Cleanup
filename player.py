@@ -23,7 +23,6 @@ class Player(pygame.sprite.Sprite):
         self.invulnerable_timer = 0.0
         self.speed_boost_timer = 0.0
         self.eco_net_timer = 0.0
-        self.sonar_timer = 0.0
         self.shield_active = False
         self.eco_net_active = False
 
@@ -76,10 +75,6 @@ class Player(pygame.sprite.Sprite):
             if self.eco_net_timer <= 0:
                 self.eco_net_active = False
 
-        # Sonar timer
-        if self.sonar_timer > 0:
-            self.sonar_timer -= dt
-
         # Rebuild the display image with tilt + effects
         self._rebuild_image()
 
@@ -122,8 +117,6 @@ class Player(pygame.sprite.Sprite):
         if p_type == 'eco_net':
             self.eco_net_active = True
             self.eco_net_timer = 8.0
-        elif p_type == 'sonar':
-            self.sonar_timer = 6.0
         elif p_type == 'turbo':
             self.speed_boost_timer = 5.0
         elif p_type == 'shield':

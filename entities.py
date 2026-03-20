@@ -81,7 +81,6 @@ class Hazard(ScrollingEntity):
 class PowerUp(ScrollingEntity):
     POWERUP_IMAGES = {
         'eco_net': "powerup_econet.png",
-        'sonar': "powerup_sonar.png",
         'turbo': "powerup_turbo.png",
         'shield': "powerup_shield.png"
     }
