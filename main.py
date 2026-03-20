@@ -11,7 +11,7 @@ from ui import UI
 from entities import PlasticWaste, MarineLife, Hazard, PowerUp
 from particles import ParticleSystem, Bubble, FloatingText
 from firebase_service import FirebaseService
-
+from trivia import TriviaManager
 
 class Game:
     def __init__(self):
@@ -62,6 +62,10 @@ class Game:
         self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
         self.high_score = self._load_high_score()
 
+        # Trivia Minigame
+        self.trivia_manager = TriviaManager()
+        self.trivia_used = False
+
         # State
         self.state = 'MENU'
         self.reset_game()
@@ -73,6 +77,7 @@ class Game:
         self.scroll_y = 0.0
         self.particles = ParticleSystem()
         self.floating_texts = []
+        self.trivia_used = False
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -83,6 +88,25 @@ class Game:
                 self._handle_auth_events(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self._handle_auth_clicks(event.pos)
+                continue
+
+            if self.state == 'TRIVIA':
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    for i in range(len(self.trivia_manager.current_question["options"])):
+                        y = 240 + i * 60
+                        btn_rect = pygame.Rect(WINDOW_WIDTH // 2 - 200, y, 400, 50)
+                        if btn_rect.collidepoint(event.pos):
+                            if self.trivia_manager.check_answer(i):
+                                # Correct -> revived
+                                self.player.lives = 1
+                                self.player.is_invulnerable = True
+                                self.player.invulnerable_timer = 3.0
+                                self.state = 'PLAYING'
+                            else:
+                                # Incorrect -> game over
+                                self.state = 'GAMEOVER'
+                                if self.logged_in_user:
+                                    self.firebase.update_high_score(self.high_score)
                 continue
 
             if event.type == pygame.KEYDOWN:
@@ -236,11 +260,16 @@ class Game:
                 self._save_high_score()
 
             if self.player.lives <= 0:
-                self.state = 'GAMEOVER'
-                self.shake_amount = 10
-                self.shake_timer = 0.4
-                if self.logged_in_user:
-                    self.firebase.update_high_score(self.high_score)
+                if not self.trivia_used:
+                    self.trivia_used = True
+                    self.state = 'TRIVIA'
+                    self.trivia_manager.start_question()
+                else:
+                    self.state = 'GAMEOVER'
+                    self.shake_amount = 10
+                    self.shake_timer = 0.4
+                    if self.logged_in_user:
+                        self.firebase.update_high_score(self.high_score)
 
             self.scroll_y += current_scroll_speed * dt
             if self.scroll_y > WINDOW_HEIGHT:
@@ -250,6 +279,13 @@ class Game:
                 self.shake_timer -= dt
                 if self.shake_timer <= 0:
                     self.shake_amount = 0
+
+        elif self.state == 'TRIVIA':
+            status = self.trivia_manager.update(dt)
+            if status == "TIMEOUT":
+                self.state = 'GAMEOVER'
+                if self.logged_in_user:
+                    self.firebase.update_high_score(self.high_score)
 
     def check_collisions(self):
         collect_radius = 100 if self.player.eco_net_active else 65
@@ -308,6 +344,13 @@ class Game:
             self.ui.draw_signup_screen(self.auth_email, self.auth_password, self.auth_username, self.auth_error, self.auth_loading)
         elif self.state == 'LEADERBOARD':
             self.ui.draw_leaderboard_screen(self.leaderboard_data)
+        elif self.state == 'TRIVIA':
+            self._draw_ocean()
+            render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            self.entities.draw(render_surf)
+            render_surf.blit(self.player.image, self.player.rect)
+            self.screen.blit(render_surf, (sx, sy))
+            self.ui.draw_trivia_screen(self.trivia_manager.current_question, self.trivia_manager.timer)
         elif self.state == 'PLAYING':
             self._draw_ocean()
 
