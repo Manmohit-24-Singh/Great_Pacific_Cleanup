@@ -1,100 +1,67 @@
-# Great_Pacific_Cleanup
+# Great Pacific Cleanup
 
-# 🌊 Great Pacific Cleanup
+A simple 2D game made in Python using Pygame where you drive a boat to clean up the ocean and learn about the environment.
 
-An arcade-style 2D vertical scrolling ocean cleanup game built with **Pygame-CE**. Steer your cleanup boat, collect floating garbage, avoid hazards and marine life, grab power-ups, and rack up points as the ocean gets increasingly chaotic!
+## Gameplay
 
-## 🎮 Gameplay
+- Collect floating trash to earn points and get speed boosts.
+- Avoid sharks, turtles, oil spills, and cargo containers, or you will lose a life.
+- Grab power-ups for temporary boosts:
+  - Turbo: Makes you go 1.5x faster for 5 seconds.
+  - Shield: Protects you from one hit.
+  - Eco Net: Increases your collection radius for 8 seconds.
+- Second Chance Trivia: If you lose all your lives, you can answer an environmental trivia question to get an extra life.
+- The game speeds up and spawns more hazards the longer you survive.
 
-- **Collect** floating trash clusters to earn points (+10 each)
-- **Avoid** sharks, oil spills, cargo containers, and rogue waves — they cost you a life!
-- **Grab power-ups** for temporary boosts:
-  - ⚡ **Turbo** — 1.5× speed for 5 seconds
-  - 🛡 **Shield** — absorbs one hit
-  - 🌐 **Eco Net** — wider collection radius for 8 seconds
-  - 📡 **Sonar** — reveals nearby entities for 6 seconds
-- **Survive** as long as you can — the game speeds up and spawns more hazards every 8 seconds!
+## Setup & Installation
 
-## 🛠 Setup & Installation
-
-### 1. Clone the repository
-
+1. Clone the repository
 ```bash
 git clone https://github.com/Manmohit-24-Singh/Great_Pacific_Cleanup.git
 cd Great_Pacific_Cleanup
 ```
 
-### 2. Create a virtual environment
-
+2. Create and activate a virtual environment
 ```bash
+# Mac/Linux
 python3 -m venv venv
-```
-
-### 3. Activate it
-
-**macOS / Linux:**
-```bash
 source venv/bin/activate
-```
 
-**Windows:**
-```bash
+# Windows
+python -m venv venv
 venv\Scripts\activate
 ```
 
-### 4. Install dependencies
-
+3. Install requirements
 ```bash
-pip install pygame-ce pygbag
+pip install pygame pyrebase4 requests
 ```
 
-> **Note:**  
-> If you encounter a `ModuleNotFoundError: No module named 'pyrebase'`, install it with:
-> ```
-> pip install pyrebase4
-> ```
-
-### 5. Run the game
-
+4. Run the game
 ```bash
 python3 main.py
 ```
 
-## 🕹 Controls
+## Controls
 
-| Key | Action |
-|-----|--------|
-| `W` / `↑` | Move up |
-| `S` / `↓` | Move down |
-| `A` / `←` | Move left |
-| `D` / `→` | Move right |
+- W / Up Arrow: Move up
+- S / Down Arrow: Move down
+- A / Left Arrow: Move left
+- D / Right Arrow: Move right
+- Space: Start game / Submit
+- L: View world leaderboard
+- O: Logout
 
-## 📁 Project Structure
+## Project Structure
 
-```
-Great_Pacific_Cleanup/
-├── assets/              # Sprite images (boat, trash, animals, hazards, powerups)
-├── main.py              # Game loop, rendering, collision detection
-├── player.py            # Player boat class
-├── entities.py          # Scrolling entities (trash, marine life, hazards, powerups)
-├── spawner.py           # Entity spawning with difficulty scaling
-├── particles.py         # Particle effects & floating score text
-├── ui.py                # HUD (score, lives, active powerups, menus)
-├── asset_loader.py      # Image loading, scaling, and caching
-├── settings.py          # All game constants and configuration
-└── README.md
-```
-
-## 🌐 Building for Web (Pygbag)
-
-```bash
-pygbag .
-```
-
-Navigate to `http://localhost:8000/` to play in the browser.
-
-## 📋 Notes
-
-- **No database** — high score is stored locally in `high_score.txt`
-- Requires **Python 3.10+**
-- Tested with **pygame-ce 2.5.7**
+- assets/: Sprite images 
+- main.py: Main game loop and engine
+- player.py: Player boat class
+- entities.py: Scrolling entities (trash, animals, hazards, powerups)
+- spawner.py: Handles spawning and game difficulty
+- particles.py: Visual effects and trails
+- ui.py: HUD, menus, and interface screens
+- settings.py: Game constants and colors
+- trivia.py: Questions for the second chance minigame
+- firebase_service.py: Connects to Firebase for leaderboards and auth
+- asset_loader.py: Handles image loading
