@@ -114,8 +114,6 @@ class UI:
             active_buffs.append('shield')
         if player.eco_net_active:
             active_buffs.append('eco_net')
-        if player.sonar_timer > 0:
-            active_buffs.append('sonar')
 
         if not active_buffs:
             return
@@ -149,9 +147,6 @@ class UI:
 
         if player.eco_net_active:
             active.append(('eco_net', POWERUP_COLORS['eco_net'], player.eco_net_timer, 8.0))
-
-        if player.sonar_timer > 0:
-            active.append(('sonar', POWERUP_COLORS['sonar'], player.sonar_timer, 6.0))
 
         if not active:
             return

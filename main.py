@@ -318,15 +318,6 @@ class Game:
 
             self.entities.draw(render_surf)
 
-            # Sonar highlight
-            if self.player.sonar_timer > 0:
-                pulse = int(40 + 20 * math.sin(self.total_time * 6))
-                for ent in self.entities:
-                    if isinstance(ent, PlasticWaste):
-                        glow = pygame.Surface((60, 60), pygame.SRCALPHA)
-                        pygame.draw.circle(glow, (255, 255, 0, pulse), (30, 30), 30, 2)
-                        render_surf.blit(glow, (int(ent.pos.x) - 30, int(ent.pos.y) - 30))
-
             # Eco net radius
             if self.player.eco_net_active:
                 pulse = int(25 + 15 * math.sin(self.total_time * 4))
