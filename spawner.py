@@ -17,8 +17,8 @@ class Spawner:
         if self.time_elapsed > DIFFICULTY_TIMER:
             self.difficulty_level += 1
             self.time_elapsed -= DIFFICULTY_TIMER
-            # Aggressively reduce spawn interval
-            self.spawn_interval = max(0.2, self.spawn_interval - 0.15)
+            # Smoothly reduce spawn interval with a hard cap to prevent impossible difficulty
+            self.spawn_interval = max(0.4, self.spawn_interval - 0.08)
             
         self.spawn_timer += dt
         if self.spawn_timer >= self.spawn_interval:
