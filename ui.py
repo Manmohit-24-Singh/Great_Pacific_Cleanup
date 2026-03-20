@@ -447,3 +447,41 @@ class UI:
         prompt = self.subtitle_font.render("PRESS ESC TO RETURN TO MENU", True, (100, 255, 180))
         px = WINDOW_WIDTH // 2 - prompt.get_width() // 2
         self.surface.blit(prompt, (px, WINDOW_HEIGHT - 80))
+
+    # ── TRIVIA SCREEN ─────────────────────────────────────
+    def draw_trivia_screen(self, question_data, time_remaining):
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 220))
+        self.surface.blit(overlay, (0, 0))
+
+        # Title
+        title = self.title_font.render("SECOND CHANCE TRIVIA", True, (255, 235, 120))
+        self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 80))
+
+        # Question
+        if question_data:
+            q_surf = self.hud_font.render(question_data["question"], True, WHITE)
+            # Simple text wrap if needed, assuming it fits for now (can optimize later)
+            self.surface.blit(q_surf, (WINDOW_WIDTH // 2 - q_surf.get_width() // 2, 160))
+
+            # Options
+            for i, option in enumerate(question_data["options"]):
+                y = 240 + i * 60
+                btn_rect = pygame.Rect(WINDOW_WIDTH // 2 - 200, y, 400, 50)
+                # Mouse hover logic handled inline for the UI call
+                mouse_pos = pygame.mouse.get_pos()
+                hover = btn_rect.collidepoint(mouse_pos)
+                
+                btn_color = (60, 120, 255) if hover else (40, 60, 80)
+                pygame.draw.rect(self.surface, btn_color, btn_rect, border_radius=10)
+                pygame.draw.rect(self.surface, WHITE, btn_rect, 2, border_radius=10)
+                
+                opt_txt = f"{i+1}. {option}"
+                txt_surf = self.font.render(opt_txt, True, WHITE)
+                self.surface.blit(txt_surf, (btn_rect.x + 20, btn_rect.centery - txt_surf.get_height() // 2))
+                
+        # Timer bar at the bottom
+        timer_w = int(400 * (time_remaining / 10.0))
+        color = (255, 100, 100) if time_remaining < 3 else (100, 255, 100)
+        pygame.draw.rect(self.surface, color, (WINDOW_WIDTH // 2 - 200, 500, timer_w, 20), border_radius=10)
+        pygame.draw.rect(self.surface, WHITE, (WINDOW_WIDTH // 2 - 200, 500, 400, 20), 2, border_radius=10)
