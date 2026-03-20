@@ -48,12 +48,12 @@ class Player(pygame.sprite.Sprite):
             direction = direction.normalize()
 
         # Smooth tilt based on horizontal movement
-        target_tilt = -direction.x * 8
-        self.tilt += (target_tilt - self.tilt) * min(1, 8 * dt)
+        target_tilt = -direction.x * 12
+        self.tilt += (target_tilt - self.tilt) * min(1, 12 * dt)
 
         current_speed = self.speed
         if self.speed_boost_timer > 0:
-            current_speed *= 1.5
+            current_speed *= 1.35
             self.speed_boost_timer -= dt
 
         self.pos += direction * current_speed * dt
