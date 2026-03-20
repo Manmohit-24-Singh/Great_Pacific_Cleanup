@@ -363,9 +363,10 @@ class Game:
         surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         for y in range(WINDOW_HEIGHT):
             ratio = y / WINDOW_HEIGHT
-            r = int(10 + 15 * ratio)
-            g = int(60 + 70 * ratio)
-            b = int(130 + 70 * ratio)
+            # Slightly more vibrant blues
+            r = int(5 + 20 * ratio)
+            g = int(50 + 80 * ratio)
+            b = int(140 + 80 * ratio)
             pygame.draw.line(surf, (r, g, b), (0, y), (WINDOW_WIDTH, y))
         return surf
 

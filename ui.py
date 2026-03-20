@@ -165,8 +165,13 @@ class UI:
 
             # Bigger background pill
             pill = pygame.Surface((70, 40), pygame.SRCALPHA)
-            pygame.draw.rect(pill, (*color[:3], 60), (0, 0, 70, 40), border_radius=8)
-            pygame.draw.rect(pill, (*color[:3], 180), (0, 0, 70, 40), 2, border_radius=8)
+            if remaining < 2.0:
+                pulse_danger = int(60 + 100 * abs(math.sin(pygame.time.get_ticks() / 150)))
+                pygame.draw.rect(pill, (pulse_danger, 0, 0, 150), (0, 0, 70, 40), border_radius=8)
+                pygame.draw.rect(pill, (255, 100, 100, 200), (0, 0, 70, 40), 2, border_radius=8)
+            else:
+                pygame.draw.rect(pill, (*color[:3], 60), (0, 0, 70, 40), border_radius=8)
+                pygame.draw.rect(pill, (*color[:3], 180), (0, 0, 70, 40), 2, border_radius=8)
             self.surface.blit(pill, (x, y))
 
             # Timer bar
