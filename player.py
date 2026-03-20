@@ -46,7 +46,7 @@ class Player(pygame.sprite.Sprite):
         if direction.magnitude() > 0:
             direction = direction.normalize()
 
-        # Smooth tilt based on horizontal movement
+        # player tilt
         target_tilt = -direction.x * 12
         self.tilt += (target_tilt - self.tilt) * min(1, 12 * dt)
 
@@ -76,9 +76,9 @@ class Player(pygame.sprite.Sprite):
                 self.eco_net_active = False
 
         # Rebuild the display image with tilt + effects
-        self._rebuild_image()
+        self.update_image()
 
-    def _rebuild_image(self):
+    def update_image(self):
         # Apply tilt rotation
         if abs(self.tilt) > 0.5:
             self.image = pygame.transform.rotate(self.original_image, self.tilt)
