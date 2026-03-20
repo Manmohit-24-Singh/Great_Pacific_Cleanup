@@ -41,7 +41,7 @@ class Game:
         self.shake_timer = 0
 
         # Pre-cached blue gradient (no AI image)
-        self.ocean_gradient = self._create_ocean_gradient()
+        self.ocean_gradient = self.make_ocean()
 
         # Pre-generate some wave line positions for animation
         self.wave_lines = []
@@ -60,7 +60,7 @@ class Game:
 
         # Persistent high score
         self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
-        self.high_score = self._load_high_score()
+        self.high_score = self.load_highscore()
 
         # Trivia Minigame
         self.trivia_manager = TriviaManager()
@@ -85,9 +85,9 @@ class Game:
                 sys.exit()
             
             if self.state in ['LOGIN', 'SIGNUP']:
-                self._handle_auth_events(event)
+                self.check_auth_keys(event)
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    self._handle_auth_clicks(event.pos)
+                    self.check_auth_clicks(event.pos)
                 continue
 
             if self.state == 'TRIVIA':
@@ -130,7 +130,7 @@ class Game:
                 elif event.key == pygame.K_ESCAPE and self.state == 'LEADERBOARD':
                     self.state = 'MENU'
 
-    def _handle_auth_clicks(self, pos):
+    def check_auth_clicks(self, pos):
         # Check input fields
         if self.state == 'LOGIN':
             if pygame.Rect(150, 200, 300, 40).collidepoint(pos): self.ui.input_active = 'email'
@@ -142,8 +142,8 @@ class Game:
 
         # Check buttons
         if self.ui.auth_submit_rect.collidepoint(pos):
-            if self.state == 'LOGIN': self._perform_login()
-            else: self._perform_signup()
+            if self.state == 'LOGIN': self.do_login()
+            else: self.do_signup()
         
         if self.ui.auth_switch_rect.collidepoint(pos):
             if self.state == 'LOGIN':
@@ -155,7 +155,7 @@ class Game:
                 self.ui.input_active = 'email'
                 self.auth_error = ""
 
-    def _handle_auth_events(self, event):
+    def check_auth_keys(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_TAB:
                 # Cycle between fields
@@ -168,9 +168,9 @@ class Game:
             
             elif event.key == pygame.K_RETURN:
                 if self.state == 'LOGIN':
-                    self._perform_login()
+                    self.do_login()
                 else:
-                    self._perform_signup()
+                    self.do_signup()
             
             elif event.key == pygame.K_BACKSPACE:
                 if self.ui.input_active == 'email': self.auth_email = self.auth_email[:-1]
@@ -186,7 +186,7 @@ class Game:
                     elif self.ui.input_active == 'password': self.auth_password += event.unicode
                     elif self.ui.input_active == 'username': self.auth_username += event.unicode
 
-    def _perform_login(self):
+    def do_login(self):
         self.auth_loading = True
         self.auth_error = ""
         res = self.firebase.login(self.auth_email, self.auth_password)
@@ -199,7 +199,7 @@ class Game:
         else:
             self.auth_error = res['error']
 
-    def _perform_signup(self):
+    def do_signup(self):
         self.auth_loading = True
         self.auth_error = ""
         res = self.firebase.sign_up(self.auth_email, self.auth_password, self.auth_username)
@@ -212,14 +212,14 @@ class Game:
             self.auth_error = res['error']
 
 
-    def _load_high_score(self):
+    def load_highscore(self):
         try:
             with open(self.high_score_path, "r", encoding="utf-8") as f:
                 return max(0, int(f.read().strip() or 0))
         except (FileNotFoundError, ValueError, OSError):
             return 0
 
-    def _save_high_score(self):
+    def save_highscore(self):
         try:
             with open(self.high_score_path, "w", encoding="utf-8") as f:
                 f.write(str(self.high_score))
@@ -246,7 +246,7 @@ class Game:
             for b in self.bubbles:
                 b.update(dt, current_scroll_speed)
 
-            # Player wake trail
+            # trail
             self.player.trail_timer += dt
             if self.player.trail_timer > 0.06:
                 self.player.trail_timer = 0
@@ -257,7 +257,7 @@ class Game:
 
             if self.player.score > self.high_score:
                 self.high_score = self.player.score
-                self._save_high_score()
+                self.save_highscore()
 
             if self.player.lives <= 0:
                 if not self.trivia_used:
@@ -345,14 +345,14 @@ class Game:
         elif self.state == 'LEADERBOARD':
             self.ui.draw_leaderboard_screen(self.leaderboard_data)
         elif self.state == 'TRIVIA':
-            self._draw_ocean()
+            self.draw_ocean()
             render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
             self.entities.draw(render_surf)
             render_surf.blit(self.player.image, self.player.rect)
             self.screen.blit(render_surf, (sx, sy))
             self.ui.draw_trivia_screen(self.trivia_manager.current_question, self.trivia_manager.timer)
         elif self.state == 'PLAYING':
-            self._draw_ocean()
+            self.draw_ocean()
 
             render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
@@ -382,7 +382,7 @@ class Game:
             self.ui.draw_hud(self.player, self.high_score)
 
         elif self.state == 'GAMEOVER':
-            self._draw_ocean()
+            self.draw_ocean()
             render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
             for b in self.bubbles:
                 b.draw(render_surf)
@@ -392,8 +392,7 @@ class Game:
             self.screen.blit(render_surf, (sx, sy))
             self.ui.draw_game_over(self.player.score, self.high_score, self.total_time)
 
-    def _create_ocean_gradient(self):
-        """Pre-render a smooth blue ocean gradient."""
+    def make_ocean(self):
         surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         for y in range(WINDOW_HEIGHT):
             ratio = y / WINDOW_HEIGHT
@@ -404,8 +403,7 @@ class Game:
             pygame.draw.line(surf, (r, g, b), (0, y), (WINDOW_WIDTH, y))
         return surf
 
-    def _draw_ocean(self):
-        """Draw the animated ocean: gradient + scrolling wave lines + caustics."""
+    def draw_ocean(self):
         self.screen.blit(self.ocean_gradient, (0, 0))
 
         wave_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)

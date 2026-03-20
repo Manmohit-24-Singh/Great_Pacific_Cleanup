@@ -40,11 +40,10 @@ class UI:
         self.auth_submit_rect = pygame.Rect(0, 0, 0, 0)
         self.auth_switch_rect = pygame.Rect(0, 0, 0, 0)
 
-    # ── HUD ──────────────────────────────────────────────
+    # HUD
     def draw_hud(self, player, high_score):
-        """Floating HUD: no bar, elements sit directly on the ocean."""
 
-        # ── Detect changes for animation triggers ──
+        # Detect changes for animation triggers
         if player.score != self.last_score:
             self.score_pulse = 0.4  # 400ms pulse
             self.last_score = player.score
@@ -54,7 +53,7 @@ class UI:
         if player.lives > self.last_lives:
             self.last_lives = player.lives
 
-        # ── Score (top-left, with drop shadow + pulse scale) ──
+        # Score (top-left, with drop shadow + pulse scale)
         base_size = 24
         if self.score_pulse > 0:
             scale_factor = 1.0 + 0.3 * (self.score_pulse / 0.4)  # shrink back
@@ -75,7 +74,7 @@ class UI:
         hi_surf = self.small_font.render(f"HI {high_score}", True, (190, 220, 235))
         self.surface.blit(hi_surf, (15, 48))
 
-        # ── Hearts (top-right, with shake/flash on damage) ──
+        # Hearts (top-right, with shake/flash on damage)
         for i in range(MAX_LIVES):
             hx = WINDOW_WIDTH - 35 - i * 30
             hy = 18
@@ -86,7 +85,7 @@ class UI:
                 if self.heart_flash_timer > 0:
                     shake_x = int(math.sin(self.heart_flash_timer * 40) * 3)
                     hx += shake_x
-                self._draw_heart(hx, hy, 10, color)
+                self.draw_heart(hx, hy, 10, color)
             else:
                 # Recently lost heart: flash bright red then fade to grey
                 if i == player.lives and self.heart_flash_timer > 0:
@@ -94,18 +93,17 @@ class UI:
                     r = int(255 * flash + 80 * (1 - flash))
                     g = int(20 * flash + 80 * (1 - flash))
                     b = int(20 * flash + 80 * (1 - flash))
-                    self._draw_heart(hx, hy, 10, (r, g, b))
+                    self.draw_heart(hx, hy, 10, (r, g, b))
                 else:
-                    self._draw_heart(hx, hy, 10, (60, 60, 60))
+                    self.draw_heart(hx, hy, 10, (60, 60, 60))
 
         if self.heart_flash_timer > 0:
             self.heart_flash_timer -= 1.0 / 60
 
-        # ── Active Powerups (top center) ──
-        self._draw_active_powerups(player)
+        # Active Powerups (top center)
+        self.draw_powerups(player)
 
     def draw_buff_icons_near_player(self, player, surface):
-        """Draw small buff icons orbiting near the player instead of at the HUD."""
         active_buffs = []
 
         if player.speed_boost_timer > 0:
@@ -135,8 +133,7 @@ class UI:
                 except Exception as e:
                     print(f"Failed to load buff icon {buff_key}: {e}")
 
-    def _draw_active_powerups(self, player):
-        """Draw active powerup icons with timers at the top center of the HUD."""
+    def draw_powerups(self, player):
         active = []
 
         if player.speed_boost_timer > 0:
@@ -183,7 +180,7 @@ class UI:
                 except:
                     pass
 
-    def _draw_heart(self, x, y, size, color):
+    def draw_heart(self, x, y, size, color):
         s = size
         pts = []
         for angle in range(0, 360, 8):
@@ -194,7 +191,7 @@ class UI:
         if len(pts) > 2:
             pygame.draw.polygon(self.surface, color, pts)
 
-    # ── GAME OVER ─────────────────────────────────────
+    # GAME OVER
     def draw_game_over(self, score, high_score, time_elapsed):
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
@@ -234,7 +231,7 @@ class UI:
         prompt = self.font.render("PRESS SPACE TO RESTART", True, (pulse, 255, pulse))
         self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 130))
 
-    # ── START SCREEN ─────────────────────────────────────
+    # START SCREEN
     def draw_start_screen(self, time_elapsed, high_score, logged_in=False, username=""):
         self.surface.fill(OCEAN_DEEP)
 
@@ -310,18 +307,18 @@ class UI:
         ver = self.small_font.render("v1.0  |  Save the Ocean", True, (80, 100, 120))
         self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 25))
 
-    # ── AUTH SCREENS ─────────────────────────────────────
+    # AUTH SCREENS
     def draw_login_screen(self, email, password, error, loading):
         self.surface.fill(OCEAN_DEEP)
-        self._draw_auth_background()
+        self.draw_bg()
 
         title = self.title_font.render("LOGIN", True, WHITE)
         self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 100))
 
         # Email Field
-        self._draw_input_field("Email", email, 200, self.input_active == 'email')
+        self.draw_input("Email", email, 200, self.input_active == 'email')
         # Password Field (masked)
-        self._draw_input_field("Password", "*" * len(password), 300, self.input_active == 'password')
+        self.draw_input("Password", "*" * len(password), 300, self.input_active == 'password')
 
         if error:
             err_surf = self.small_font.render(error, True, (255, 100, 100))
@@ -333,22 +330,22 @@ class UI:
         else:
             # Login Button
             self.auth_submit_rect = pygame.Rect(WINDOW_WIDTH // 2 - 100, 440, 200, 50)
-            self._draw_button("LOGIN", self.auth_submit_rect, (100, 255, 100))
+            self.draw_btn("LOGIN", self.auth_submit_rect, (100, 255, 100))
 
         # Switch to Signup Button
         self.auth_switch_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 520, 240, 40)
-        self._draw_button("GO TO SIGN UP", self.auth_switch_rect, (150, 150, 255), small=True)
+        self.draw_btn("GO TO SIGN UP", self.auth_switch_rect, (150, 150, 255), small=True)
 
     def draw_signup_screen(self, email, password, username, error, loading):
         self.surface.fill(OCEAN_DEEP)
-        self._draw_auth_background()
+        self.draw_bg()
 
         title = self.title_font.render("SIGN UP", True, WHITE)
         self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 80))
 
-        self._draw_input_field("Username", username, 180, self.input_active == 'username')
-        self._draw_input_field("Email", email, 270, self.input_active == 'email')
-        self._draw_input_field("Password", "*" * len(password), 360, self.input_active == 'password')
+        self.draw_input("Username", username, 180, self.input_active == 'username')
+        self.draw_input("Email", email, 270, self.input_active == 'email')
+        self.draw_input("Password", "*" * len(password), 360, self.input_active == 'password')
 
         if error:
             err_surf = self.small_font.render(error, True, (255, 100, 100))
@@ -360,13 +357,13 @@ class UI:
         else:
             # Signup Button
             self.auth_submit_rect = pygame.Rect(WINDOW_WIDTH // 2 - 100, 490, 200, 50)
-            self._draw_button("SIGN UP", self.auth_submit_rect, (100, 255, 100))
+            self.draw_btn("SIGN UP", self.auth_submit_rect, (100, 255, 100))
 
         # Switch to Login Button
         self.auth_switch_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 570, 240, 40)
-        self._draw_button("BACK TO LOGIN", self.auth_switch_rect, (150, 150, 255), small=True)
+        self.draw_btn("BACK TO LOGIN", self.auth_switch_rect, (150, 150, 255), small=True)
 
-    def _draw_auth_background(self):
+    def draw_bg(self):
         for y in range(0, WINDOW_HEIGHT, 4):
             ratio = y / WINDOW_HEIGHT
             r = int(5 + 10 * ratio)
@@ -374,7 +371,7 @@ class UI:
             b = int(40 + 60 * ratio)
             pygame.draw.line(self.surface, (r, g, b), (0, y), (WINDOW_WIDTH, y))
 
-    def _draw_input_field(self, label, value, y, active):
+    def draw_input(self, label, value, y, active):
         lbl = self.small_font.render(label, True, (200, 200, 200))
         self.surface.blit(lbl, (150, y - 25))
         
@@ -388,7 +385,7 @@ class UI:
             cursor_x = 160 + txt.get_width() + 2
             pygame.draw.line(self.surface, WHITE, (cursor_x, y + 8), (cursor_x, y + 32), 2)
 
-    def _draw_button(self, text, rect, color, small=False):
+    def draw_btn(self, text, rect, color, small=False):
         mouse_pos = pygame.mouse.get_pos()
         hover = rect.collidepoint(mouse_pos)
         
@@ -405,10 +402,10 @@ class UI:
         txt = font.render(text, True, BLACK if hover else WHITE)
         self.surface.blit(txt, (rect.centerx - txt.get_width() // 2, rect.centery - txt.get_height() // 2))
 
-    # ── LEADERBOARD SCREEN ────────────────────────────────
+    # LEADERBOARD SCREEN
     def draw_leaderboard_screen(self, leaderboard, user_score=None):
         self.surface.fill(OCEAN_DEEP)
-        self._draw_auth_background()
+        self.draw_bg()
 
         title = self.title_font.render("WORLD LEADERBOARD", True, (255, 235, 120))
         self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 50))
@@ -448,7 +445,7 @@ class UI:
         px = WINDOW_WIDTH // 2 - prompt.get_width() // 2
         self.surface.blit(prompt, (px, WINDOW_HEIGHT - 80))
 
-    # ── TRIVIA SCREEN ─────────────────────────────────────
+    # TRIVIA SCREEN
     def draw_trivia_screen(self, question_data, time_remaining):
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 220))
