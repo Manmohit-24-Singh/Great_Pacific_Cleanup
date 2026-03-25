@@ -399,6 +399,11 @@ class Game:
             self.screen.blit(render_surf, (sx, sy))
             self.ui.draw_hud(self.player, self.high_score)
 
+            # Guest notice at bottom of screen
+            if not self.logged_in_user:
+                guest_txt = self.ui.small_font.render("Playing as Guest - scores won't be saved", True, (180, 180, 180))
+                self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 22))
+
         elif self.state == 'GAMEOVER':
             self.draw_ocean()
             render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
