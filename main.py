@@ -429,6 +429,17 @@ class Game:
                 guest_txt = self.ui.small_font.render("Playing as Guest - scores won't be saved", True, (180, 180, 180))
                 self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 35))
 
+        elif self.state == 'PAUSED':
+            self.draw_ocean()
+            render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            for b in self.bubbles:
+                b.draw(render_surf)
+                self.entities.draw(render_surf)
+                render_surf.blit(self.player.image, self.player.rect)
+                self.particles.draw(render_surf)
+                self.screen.blit(render_surf, (0, 0))
+                self.ui.draw_pause_screen()
+
         elif self.state == 'GAMEOVER':
             self.draw_ocean()
             render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
