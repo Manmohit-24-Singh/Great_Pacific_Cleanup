@@ -341,6 +341,13 @@ class UI:
         # Switch to Signup Button
         self.auth_switch_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 520, 240, 40)
         self.draw_btn("GO TO SIGN UP", self.auth_switch_rect, (150, 150, 255), small=True)
+        # Continue as Guest button
+        elf.auth_guest_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 575, 240, 40)
+        self.draw_btn("CONTINUE AS GUEST", self.auth_guest_rect, (150, 200, 255), small=True)
+
+        # Back to menu button
+        self.auth_back_rect = pygame.Rect(WINDOW_WIDTH // 2 - 120, 630, 240, 40)
+        self.draw_btn("BACK TO MENU", self.auth_back_rect, (180, 100, 100), small=True)
 
     def draw_signup_screen(self, email, password, username, error, loading):
         self.surface.fill(OCEAN_DEEP)
