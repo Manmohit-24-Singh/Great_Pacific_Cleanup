@@ -41,6 +41,14 @@ class UI:
         self.auth_switch_rect = pygame.Rect(0, 0, 0, 0)
         self.auth_back_rect = pygame.Rect(0, 0, 0, 0)
         self.auth_guest_rect = pygame.Rect(0, 0, 0, 0)
+
+        # Pause menu button rects
+        self.pause_resume_rect = pygame.Rect(0, 0, 0, 0)
+        self.pause_restart_rect = pygame.Rect(0, 0, 0, 0)
+        self.pause_menu_rect = pygame.Rect(0, 0, 0, 0)
+        self.pause_sdg12_rect = pygame.Rect(0, 0, 0, 0)
+        self.pause_sdg14_rect = pygame.Rect(0, 0, 0, 0)
+        
     # HUD
     def draw_hud(self, player, high_score):
 
