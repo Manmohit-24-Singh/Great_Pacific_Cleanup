@@ -542,6 +542,19 @@ class UI:
         self.pause_menu_rect = pygame.Rect(cx - btn_w // 2, 330, btn_w, btn_h)
         self.draw_btn("MAIN MENU", self.pause_menu_rect, (200, 100, 100))
 
+        # SDG divider line
+        pygame.draw.line(self.surface, (60, 100, 140), (cx - 130, 410), (cx + 130, 410), 1)
+        sdg_label = self.small_font.render("LEARN MORE", True, (120, 180, 220))
+        self.surface.blit(sdg_label, (cx - sdg_label.get_width() // 2, 418))
+
+        # SDG 12 link button
+        self.pause_sdg12_rect = pygame.Rect(cx - btn_w // 2, 445, btn_w, btn_h)
+        self.draw_btn("SDG 12: Responsible Consumption", self.pause_sdg12_rect, (80, 160, 255), small=True)
+
+        # SDG 14 link button
+        self.pause_sdg14_rect = pygame.Rect(cx - btn_w // 2, 508, btn_w, btn_h)
+        self.draw_btn("SDG 14: Life Below Water", self.pause_sdg14_rect, (0, 180, 200), small=True)
+
         # Escape hint
         esc_txt = self.small_font.render("Press ESC to resume", True, (120, 120, 120))
-        self.surface.blit(esc_txt, (cx - esc_txt.get_width() // 2, 400))
+        self.surface.blit(esc_txt, (cx - esc_txt.get_width() // 2, 580))
