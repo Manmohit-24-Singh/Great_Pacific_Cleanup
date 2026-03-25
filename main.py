@@ -11,6 +11,7 @@ from ui import UI
 from entities import PlasticWaste, MarineLife, Hazard, PowerUp
 from particles import ParticleSystem, Bubble, FloatingText
 from firebase_service import FirebaseService
+import webbrowser
 from trivia import TriviaManager
 
 class Game:
