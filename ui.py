@@ -48,7 +48,7 @@ class UI:
         self.pause_menu_rect = pygame.Rect(0, 0, 0, 0)
         self.pause_sdg12_rect = pygame.Rect(0, 0, 0, 0)
         self.pause_sdg14_rect = pygame.Rect(0, 0, 0, 0)
-        
+
     # HUD
     def draw_hud(self, player, high_score):
 
@@ -511,3 +511,33 @@ class UI:
         color = (255, 100, 100) if time_remaining < 3 else (100, 255, 100)
         pygame.draw.rect(self.surface, color, (WINDOW_WIDTH // 2 - 200, 500, timer_w, 20), border_radius=10)
         pygame.draw.rect(self.surface, WHITE, (WINDOW_WIDTH // 2 - 200, 500, 400, 20), 2, border_radius=10)
+
+    # PAUSE SCREEN
+    def draw_pause_screen(self):
+        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        self.surface.blit(overlay, (0, 0))
+
+        # Title
+        title = self.title_font.render("PAUSED", True, (80, 220, 255))
+        self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 80))
+
+        cx = WINDOW_WIDTH // 2
+        btn_w = 260
+        btn_h = 48
+
+        # Resume button
+        self.pause_resume_rect = pygame.Rect(cx - btn_w // 2, 200, btn_w, btn_h)
+        self.draw_btn("RESUME", self.pause_resume_rect, (100, 255, 100))
+
+        # Restart button
+        self.pause_restart_rect = pygame.Rect(cx - btn_w // 2, 265, btn_w, btn_h)
+        self.draw_btn("RESTART", self.pause_restart_rect, (255, 200, 50))
+
+        # Return to main menu button
+        self.pause_menu_rect = pygame.Rect(cx - btn_w // 2, 330, btn_w, btn_h)
+        self.draw_btn("MAIN MENU", self.pause_menu_rect, (200, 100, 100))
+
+        # Escape hint
+        esc_txt = self.small_font.render("Press ESC to resume", True, (120, 120, 120))
+        self.surface.blit(esc_txt, (cx - esc_txt.get_width() // 2, 400))
