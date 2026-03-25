@@ -527,7 +527,7 @@ class UI:
         self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 80))
 
         cx = WINDOW_WIDTH // 2
-        btn_w = 260
+        btn_w = 300
         btn_h = 48
 
         # Resume button
