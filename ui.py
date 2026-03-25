@@ -39,7 +39,8 @@ class UI:
         # Button Rects for interaction
         self.auth_submit_rect = pygame.Rect(0, 0, 0, 0)
         self.auth_switch_rect = pygame.Rect(0, 0, 0, 0)
-
+        self.auth_back_rect = pygame.Rect(0, 0, 0, 0)
+        self.auth_guest_rect = pygame.Rect(0, 0, 0, 0)
     # HUD
     def draw_hud(self, player, high_score):
 
