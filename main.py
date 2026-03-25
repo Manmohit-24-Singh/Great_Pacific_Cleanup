@@ -91,6 +91,13 @@ class Game:
                     self.check_auth_clicks(event.pos)
                 continue
 
+            if self.state == 'PAUSED':
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    self.check_pause_clicks(event.pos)
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.state = 'PLAYING'
+                continue
+
             if self.state == 'TRIVIA':
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     for i in range(len(self.trivia_manager.current_question["options"])):
@@ -109,6 +116,10 @@ class Game:
                                 if self.logged_in_user:
                                     self.firebase.update_high_score(self.high_score)
                 continue
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE and self.state == 'PLAYING':
+                    self.state = 'PAUSED'
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
