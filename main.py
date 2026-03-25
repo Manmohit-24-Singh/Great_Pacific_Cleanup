@@ -148,6 +148,19 @@ class Game:
                 elif event.key == pygame.K_ESCAPE and self.state == 'LEADERBOARD':
                     self.state = 'MENU'
 
+    def check_pause_clicks(self, pos):
+        if self.ui.pause_resume_rect.collidepoint(pos):
+            self.state = 'PLAYING'
+        elif self.ui.pause_restart_rect.collidepoint(pos):
+            self.reset_game()
+            self.state = 'PLAYING'
+        elif self.ui.pause_menu_rect.collidepoint(pos):
+            self.state = 'MENU'
+        elif self.ui.pause_sdg12_rect.collidepoint(pos):
+            webbrowser.open("https://sdgs.un.org/goals/goal12")
+        elif self.ui.pause_sdg14_rect.collidepoint(pos):
+            webbrowser.open("https://sdgs.un.org/goals/goal14")
+
     def check_auth_clicks(self, pos):
         # Check input fields
         if self.state == 'LOGIN':
