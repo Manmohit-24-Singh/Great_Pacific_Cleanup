@@ -120,6 +120,12 @@ class Game:
                             self.ui.input_active = 'email'
                     elif self.state == 'GAMEOVER':
                         self.state = 'MENU'
+                elif event.key == pygame.K_g and self.state == 'MENU':
+                    # Continue as guest
+                    self.logged_in_user = None
+                    self.username = "Guest"
+                    self.state = 'PLAYING'
+                    self.reset_game()
                 elif event.key == pygame.K_l and self.state == 'MENU':
                     self.state = 'LEADERBOARD'
                     self.leaderboard_data = self.firebase.get_leaderboard()
