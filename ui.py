@@ -207,7 +207,7 @@ class UI:
         self.surface.blit(go_text, (gx, gy))
 
         # Score
-        box_w, box_h = 260, 90
+        box_w, box_h = 280, 120
         score_box = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
         pygame.draw.rect(score_box, (15, 25, 45, 200), (0, 0, box_w, box_h), border_radius=12)
         pygame.draw.rect(score_box, (40, 180, 220, 120), (0, 0, box_w, box_h), 2, border_radius=12)
@@ -221,7 +221,7 @@ class UI:
         self.surface.blit(sc, (WINDOW_WIDTH // 2 - sc.get_width() // 2, by + 40))
 
         hi_label = self.subtitle_font.render(f"HIGH SCORE: {high_score}", True, (120, 220, 255))
-        self.surface.blit(hi_label, (WINDOW_WIDTH // 2 - hi_label.get_width() // 2, by + box_h + 16))
+        self.surface.blit(hi_label, (WINDOW_WIDTH // 2 - hi_label.get_width() // 2, by + box_h + 32))
 
         if score == high_score and score > 0:
             new_best = self.subtitle_font.render("NEW HIGH SCORE!", True, (255, 235, 120))
@@ -230,7 +230,7 @@ class UI:
         # Pulsing restart
         pulse = int(180 + 75 * math.sin(time_elapsed * 3))
         prompt = self.font.render("PRESS SPACE TO RESTART", True, (pulse, 255, pulse))
-        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 130))
+        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 200))
 
     # START SCREEN
     def draw_start_screen(self, time_elapsed, high_score, logged_in=False, username=""):
