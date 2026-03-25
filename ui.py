@@ -109,6 +109,10 @@ class UI:
         if self.heart_flash_timer > 0:
             self.heart_flash_timer -= 1.0 / 60
 
+        # Pause hint below hearts
+        pause_hint = self.small_font.render("ESC to Pause", True, (150, 150, 150))
+        self.surface.blit(pause_hint, (WINDOW_WIDTH - pause_hint.get_width() - 10, 40))
+
         # Active Powerups (top center)
         self.draw_powerups(player)
 
