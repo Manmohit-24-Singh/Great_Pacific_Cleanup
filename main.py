@@ -160,6 +160,18 @@ class Game:
                 self.state = 'LOGIN'
                 self.ui.input_active = 'email'
                 self.auth_error = ""
+        
+        # Back to menu button
+        if self.ui.auth_back_rect.collidepoint(pos):
+            self.state = 'MENU'
+            self.auth_error = ""
+
+        # Guest button
+        if self.state == 'LOGIN' and self.ui.auth_guest_rect.collidepoint(pos):
+            self.logged_in_user = None
+            self.username = "Guest"
+            self.state = 'PLAYING'
+            self.reset_game()
 
     def check_auth_keys(self, event):
         if event.type == pygame.KEYDOWN:
