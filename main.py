@@ -402,7 +402,7 @@ class Game:
             # Guest notice at bottom of screen
             if not self.logged_in_user:
                 guest_txt = self.ui.small_font.render("Playing as Guest - scores won't be saved", True, (180, 180, 180))
-                self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 22))
+                self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 35))
 
         elif self.state == 'GAMEOVER':
             self.draw_ocean()
