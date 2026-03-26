@@ -376,7 +376,11 @@ class Game:
             self.ocean_gradient = self.make_ocean()
 
         self.player.update(dt)
-        self.spawner.update(dt, self.entities)
+        
+        if self.player.hyperdrive_active:
+            current_scroll_speed *= 3
+            
+        self.spawner.update(dt, self.entities, hyperdrive=self.player.hyperdrive_active)
         self.entities.update(dt, current_scroll_speed)
         self.particles.update(dt)
 
@@ -387,12 +391,27 @@ class Game:
 
         for b in self.bubbles:
             b.update(dt, current_scroll_speed)
+            
+        # Magnetic Hyperdrive Pull
+        if self.player.hyperdrive_active:
+            for ent in self.entities:
+                if isinstance(ent, PlasticWaste) or isinstance(ent, PowerUp):
+                    dist = self.player.pos.distance_to(ent.pos)
+                    if dist < 400:
+                        vec = self.player.pos - ent.pos
+                        if vec.length() > 0:
+                            ent.pos += vec.normalize() * 1000 * dt
 
         # trail
         self.player.trail_timer += dt
         if self.player.trail_timer > 0.06:
             self.player.trail_timer = 0
-            trail_color = (255, 120, 255) if self.player.speed_boost_timer > 0 else (120, 200, 255)
+            if self.player.hyperdrive_active:
+                trail_color = (255, 215, 0)
+            elif self.player.speed_boost_timer > 0:
+                trail_color = (255, 120, 255)
+            else:
+                trail_color = (120, 200, 255)
             self.particles.emit_trail(self.player.pos.x, self.player.pos.y + 35, trail_color)
 
         self.check_collisions()
@@ -430,7 +449,12 @@ class Game:
                 self.firebase.update_high_score(self.high_score)
 
     def check_collisions(self):
-        collect_radius = 100 if self.player.eco_net_active else 65
+        if self.player.hyperdrive_active:
+            collect_radius = 200 # Extra large base magnet
+        elif self.player.eco_net_active:
+            collect_radius = 100
+        else:
+            collect_radius = 65
 
         for ent in list(self.entities):
             dist = self.player.pos.distance_to(ent.pos)
@@ -445,15 +469,14 @@ class Game:
                     ent.kill()
                 elif isinstance(ent, PowerUp):
                     if ent.power_type == 'hyperdrive':
-                        self.spawner.difficulty_level += 2
-                        self.player.score += 500
+                        self.player.hyperdrive_active = True
+                        self.player.hyperdrive_timer = 8.0 # 8 seconds of glory
                         self.player.is_invulnerable = True
-                        self.player.invulnerable_timer = 3.0
                         
                         # Extra intense particles & screen shake
                         self.particles.emit_powerup(ent.pos.x, ent.pos.y)
                         self.floating_texts.append(
-                            FloatingText(ent.pos.x - 40, ent.pos.y - 30, "WARP! +2 LEVELS", (255, 215, 0)))
+                            FloatingText(ent.pos.x - 40, ent.pos.y - 30, "MAGNETIC HYPERDRIVE!", (255, 215, 0)))
                         self.shake_amount = 25
                         self.shake_timer = 1.0
                     else:
@@ -467,7 +490,13 @@ class Game:
             hard_col_radius = 50
             if dist < hard_col_radius:
                 if isinstance(ent, MarineLife) or isinstance(ent, Hazard):
-                    if not self.player.is_invulnerable:
+                    if self.player.hyperdrive_active:
+                        # Vaporize obstacles during hyperdrive!
+                        self.particles.emit_damage(ent.pos.x, ent.pos.y)
+                        self.player.score += 50
+                        self.floating_texts.append(FloatingText(ent.pos.x, ent.pos.y, "CRUSHED! +50", (255, 100, 100)))
+                        ent.kill()
+                    elif not self.player.is_invulnerable:
                         hit = self.player.take_damage(1)
                         if hit:
                             self.particles.emit_damage(self.player.pos.x, self.player.pos.y)

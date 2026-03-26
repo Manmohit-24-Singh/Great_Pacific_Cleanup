@@ -11,8 +11,10 @@ class Spawner:
         self.time_elapsed = 0
         self.spawned_first_hyperdrive = False
         
-    def update(self, dt, entity_group):
-        self.time_elapsed += dt
+    def update(self, dt, entity_group, hyperdrive=False):
+        # Time and spawns move significantly faster during hyperdrive
+        actual_dt = dt * (5.0 if hyperdrive else 1.0)
+        self.time_elapsed += actual_dt
         
         # Increase difficulty
         if self.time_elapsed > DIFFICULTY_TIMER:
