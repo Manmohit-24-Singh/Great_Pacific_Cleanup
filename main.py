@@ -444,11 +444,24 @@ class Game:
                         FloatingText(ent.pos.x - 10, ent.pos.y - 20, "+10", (100, 255, 180)))
                     ent.kill()
                 elif isinstance(ent, PowerUp):
-                    self.player.apply_powerup(ent.power_type)
-                    self.player.score += 20
-                    self.particles.emit_powerup(ent.pos.x, ent.pos.y)
-                    self.floating_texts.append(
-                        FloatingText(ent.pos.x - 10, ent.pos.y - 20, "+20", (255, 255, 100)))
+                    if ent.power_type == 'hyperdrive':
+                        self.spawner.difficulty_level += 2
+                        self.player.score += 500
+                        self.player.is_invulnerable = True
+                        self.player.invulnerable_timer = 3.0
+                        
+                        # Extra intense particles & screen shake
+                        self.particles.emit_powerup(ent.pos.x, ent.pos.y)
+                        self.floating_texts.append(
+                            FloatingText(ent.pos.x - 40, ent.pos.y - 30, "WARP! +2 LEVELS", (255, 215, 0)))
+                        self.shake_amount = 25
+                        self.shake_timer = 1.0
+                    else:
+                        self.player.apply_powerup(ent.power_type)
+                        self.player.score += 20
+                        self.particles.emit_powerup(ent.pos.x, ent.pos.y)
+                        self.floating_texts.append(
+                            FloatingText(ent.pos.x - 10, ent.pos.y - 20, "+20", (255, 255, 100)))
                     ent.kill()
 
             hard_col_radius = 50

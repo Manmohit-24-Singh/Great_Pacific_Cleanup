@@ -9,6 +9,7 @@ class Spawner:
         self.spawn_interval = 1.0  # Start faster
         self.difficulty_level = 0
         self.time_elapsed = 0
+        self.spawned_first_hyperdrive = False
         
     def update(self, dt, entity_group):
         self.time_elapsed += dt
@@ -19,6 +20,14 @@ class Spawner:
             self.time_elapsed -= DIFFICULTY_TIMER
             # Smoothly reduce spawn interval with a hard cap to prevent impossible difficulty
             self.spawn_interval = max(0.4, self.spawn_interval - 0.08)
+            
+        # Guarantee a hyperdrive drop early in the run
+        if self.time_elapsed >= 4.0 and not self.spawned_first_hyperdrive:
+            self.spawned_first_hyperdrive = True
+            x = random.randint(150, WINDOW_WIDTH - 150) # Drop closer to center
+            y = random.randint(-200, -50)
+            ent = PowerUp(x, y, 'hyperdrive')
+            entity_group.add(ent)
             
         self.spawn_timer += dt
         if self.spawn_timer >= self.spawn_interval:
@@ -44,7 +53,10 @@ class Spawner:
             h_type = random.choice(list(HAZARD_COLORS.keys()))
             ent = Hazard(x, y, h_type)
         else: # powerup
-            p_type = random.choice(list(POWERUP_COLORS.keys()))
+            p_types = list(POWERUP_COLORS.keys())
+            # Give hyperdrive a small weight compared to the standard powerups
+            weights = [10 if pt != 'hyperdrive' else 2 for pt in p_types]
+            p_type = random.choices(p_types, weights=weights, k=1)[0]
             ent = PowerUp(x, y, p_type)
             
         entity_group.add(ent)
