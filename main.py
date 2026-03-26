@@ -30,7 +30,10 @@ class Game:
             os.path.join(os.path.dirname(__file__), "sounds", "darkest hour.mp3"),
         ]
         self._current_music_idx = 0
-        self.play_music_for_level(1)
+        # Level progression
+        self.level = 1
+        self._next_level_score = LEVEL_UP_SCORE
+        self.play_music_for_level(self.level)
 
     def play_music_for_level(self, level):
         # Switch music every 5 levels, more ominous at higher levels
