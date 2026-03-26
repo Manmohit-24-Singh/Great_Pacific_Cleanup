@@ -316,7 +316,9 @@ class Game:
 
 
         if self.state == 'PLAYING':
-            current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
+            # Increase scroll speed with level for difficulty scaling
+            level_speed_bonus = (self.level - 1) * 0.15  # Tune this value as needed
+            current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC) + level_speed_bonus
 
             self.player.update(dt)
             self.spawner.update(dt, self.entities)
