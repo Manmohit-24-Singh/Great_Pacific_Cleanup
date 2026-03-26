@@ -22,13 +22,27 @@ class Game:
         pygame.init()
         # Initialize the mixer for music
         pygame.mixer.init()
-        # Play background music
-        music_path = os.path.join(os.path.dirname(__file__), "sounds", "evil conspiracy.mp3")
-        try:
-            pygame.mixer.music.load(music_path)
-            pygame.mixer.music.play(-1)  # Loop indefinitely
-        except Exception as e:
-            print(f"Failed to load or play music: {e}")
+        # Level-based music tracks (ordered by intensity)
+        self.music_tracks = [
+            os.path.join(os.path.dirname(__file__), "sounds", "aliens.mp3"),
+            os.path.join(os.path.dirname(__file__), "sounds", "the great escape.mp3"),
+            os.path.join(os.path.dirname(__file__), "sounds", "evil conspiracy.mp3"),
+            os.path.join(os.path.dirname(__file__), "sounds", "darkest hour.mp3"),
+        ]
+        self._current_music_idx = 0
+        self.play_music_for_level(1)
+
+    def play_music_for_level(self, level):
+        # Switch music every 5 levels, more ominous at higher levels
+        idx = min((level - 1) // 5, len(self.music_tracks) - 1)
+        if idx != getattr(self, '_current_music_idx', None):
+            try:
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(self.music_tracks[idx])
+                pygame.mixer.music.play(-1)
+                self._current_music_idx = idx
+            except Exception as e:
+                print(f"Failed to load or play music: {e}")
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
@@ -104,6 +118,8 @@ class Game:
         self.level = 1  # Reset level to 1 on new game
         self._next_level_score = LEVEL_UP_SCORE
         self.ocean_gradient = self.make_ocean(self.get_gradient_for_level(self.level))
+        self._current_music_idx = 0
+        self.play_music_for_level(self.level)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -311,8 +327,9 @@ class Game:
             while self.player.score >= self._next_level_score:
                 self.level += 1
                 self._next_level_score += LEVEL_UP_SCORE
-                # Update background gradient on level up
+                # Update background gradient and music on level up
                 self.ocean_gradient = self.make_ocean(self.get_gradient_for_level(self.level))
+                self.play_music_for_level(self.level)
 
             # Update floating score texts
             for ft in self.floating_texts:
