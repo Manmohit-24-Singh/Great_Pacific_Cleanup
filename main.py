@@ -17,6 +17,15 @@ from trivia import TriviaManager
 class Game:
     def __init__(self):
         pygame.init()
+        # Initialize the mixer for music
+        pygame.mixer.init()
+        # Play background music
+        music_path = os.path.join(os.path.dirname(__file__), "sounds", "evil conspiracy.mp3")
+        try:
+            pygame.mixer.music.load(music_path)
+            pygame.mixer.music.play(-1)  # Loop indefinitely
+        except Exception as e:
+            print(f"Failed to load or play music: {e}")
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
