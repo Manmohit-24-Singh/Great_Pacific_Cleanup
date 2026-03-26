@@ -435,7 +435,7 @@ class Game:
                 ft.draw(render_surf)
 
             self.screen.blit(render_surf, (sx, sy))
-            self.ui.draw_hud(self.player, self.high_score)
+            self.ui.draw_hud(self.player, self.high_score, self.level)
 
             # Guest notice at bottom of screen
             if not self.logged_in_user:

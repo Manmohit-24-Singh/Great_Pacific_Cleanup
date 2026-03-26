@@ -50,7 +50,7 @@ class UI:
         self.pause_sdg14_rect = pygame.Rect(0, 0, 0, 0)
 
     # HUD
-    def draw_hud(self, player, high_score):
+    def draw_hud(self, player, high_score, level):
 
         # Detect changes for animation triggers
         if player.score != self.last_score:
@@ -82,6 +82,10 @@ class UI:
 
         hi_surf = self.small_font.render(f"HI {high_score}", True, (190, 220, 235))
         self.surface.blit(hi_surf, (15, 48))
+
+        # Level display (top-left, below high score)
+        level_surf = self.small_font.render(f"LEVEL {level}", True, (255, 220, 120))
+        self.surface.blit(level_surf, (15, 68))
 
         # Hearts (top-right, with shake/flash on damage)
         for i in range(MAX_LIVES):
