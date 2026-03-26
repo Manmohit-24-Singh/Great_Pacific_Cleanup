@@ -37,7 +37,8 @@ HAZARD_COLORS = {
 POWERUP_COLORS = {
     'eco_net': (0, 255, 255),
     'turbo': (255, 0, 255),
-    'shield': (0, 255, 127)
+    'shield': (0, 255, 127),
+    'hyperdrive': (255, 215, 0)
 }
 
 # Gameplay Parameters

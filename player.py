@@ -25,6 +25,9 @@ class Player(pygame.sprite.Sprite):
         self.eco_net_timer = 0.0
         self.shield_active = False
         self.eco_net_active = False
+        
+        self.hyperdrive_active = False
+        self.hyperdrive_timer = 0.0
 
         # Visual state
         self.tilt = 0.0  # lean angle based on horizontal input
@@ -50,8 +53,18 @@ class Player(pygame.sprite.Sprite):
         target_tilt = -direction.x * 12
         self.tilt += (target_tilt - self.tilt) * min(1, 12 * dt)
 
+        # Timers
+        if self.hyperdrive_timer > 0:
+            self.hyperdrive_timer -= dt
+            if self.hyperdrive_timer <= 0:
+                self.hyperdrive_active = False
+                self.is_invulnerable = True
+                self.invulnerable_timer = 1.0  # Safe grace period
+
         current_speed = self.speed
-        if self.speed_boost_timer > 0:
+        if self.hyperdrive_active:
+            current_speed *= 2.5 # Rocket speed maneuvers
+        elif self.speed_boost_timer > 0:
             current_speed *= 1.35
             self.speed_boost_timer -= dt
 
@@ -105,11 +118,20 @@ class Player(pygame.sprite.Sprite):
             self.rect = self.image.get_rect(center=old_center)
 
         # Speed boost glow
-        if self.speed_boost_timer > 0:
+        if self.speed_boost_timer > 0 and not self.hyperdrive_active:
             w, h = self.image.get_size()
             glow = pygame.Surface((w, h), pygame.SRCALPHA)
             pulse = int(100 + 55 * math.sin(pygame.time.get_ticks() / 200))  # 100–155 alpha
             glow.fill((255, 40, 200, pulse))
+            glow.blit(self.image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+
+        # Hyperdrive golden glow
+        if self.hyperdrive_active:
+            w, h = self.image.get_size()
+            glow = pygame.Surface((w, h), pygame.SRCALPHA)
+            pulse = int(180 + 75 * math.sin(pygame.time.get_ticks() / 100))
+            glow.fill((255, 215, 0, pulse))
             glow.blit(self.image, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
             self.image.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
@@ -123,7 +145,7 @@ class Player(pygame.sprite.Sprite):
             self.shield_active = True
 
     def take_damage(self, amount=1):
-        if self.is_invulnerable:
+        if self.is_invulnerable or self.hyperdrive_active:
             return False
 
         if self.shield_active:
