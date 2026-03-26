@@ -14,6 +14,9 @@ from firebase_service import FirebaseService
 import webbrowser
 from trivia import TriviaManager
 
+# Level progression constant
+LEVEL_UP_SCORE = 200
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -50,8 +53,14 @@ class Game:
         self.shake_amount = 0
         self.shake_timer = 0
 
-        # Pre-cached blue gradient (no AI image)
-        self.ocean_gradient = self.make_ocean()
+        # Level-based ocean backgrounds
+        self.ocean_gradients = [
+            ((5, 50, 140), (25, 130, 220)),   # Level 1-3: Light blue
+            ((10, 30, 80), (40, 80, 180)),    # Level 4-6: Deeper blue
+            ((20, 20, 60), (60, 60, 120)),    # Level 7-9: Deepest blue
+            ((40, 10, 40), (100, 40, 100)),   # Level 10+: Abyss purple
+        ]
+        self.ocean_gradient = self.make_ocean(self.get_gradient_for_level(self.level))
 
         # Pre-generate some wave line positions for animation
         self.wave_lines = []
@@ -78,6 +87,7 @@ class Game:
 
         # Level progression
         self.level = 1
+        self._next_level_score = LEVEL_UP_SCORE
 
         # State
         self.state = 'MENU'
@@ -92,6 +102,8 @@ class Game:
         self.floating_texts = []
         self.trivia_used = False
         self.level = 1  # Reset level to 1 on new game
+        self._next_level_score = LEVEL_UP_SCORE
+        self.ocean_gradient = self.make_ocean(self.get_gradient_for_level(self.level))
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -286,6 +298,7 @@ class Game:
     def update(self, dt):
         self.total_time += dt
 
+
         if self.state == 'PLAYING':
             current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
 
@@ -293,6 +306,13 @@ class Game:
             self.spawner.update(dt, self.entities)
             self.entities.update(dt, current_scroll_speed)
             self.particles.update(dt)
+
+            # Level progression: level up every LEVEL_UP_SCORE points
+            while self.player.score >= self._next_level_score:
+                self.level += 1
+                self._next_level_score += LEVEL_UP_SCORE
+                # Update background gradient on level up
+                self.ocean_gradient = self.make_ocean(self.get_gradient_for_level(self.level))
 
             # Update floating score texts
             for ft in self.floating_texts:
@@ -464,16 +484,21 @@ class Game:
             self.screen.blit(render_surf, (sx, sy))
             self.ui.draw_game_over(self.player.score, self.high_score, self.total_time)
 
-    def make_ocean(self):
+    def make_ocean(self, gradient):
         surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        (r1, g1, b1), (r2, g2, b2) = gradient
         for y in range(WINDOW_HEIGHT):
             ratio = y / WINDOW_HEIGHT
-            # Slightly more vibrant blues
-            r = int(5 + 20 * ratio)
-            g = int(50 + 80 * ratio)
-            b = int(140 + 80 * ratio)
+            r = int(r1 + (r2 - r1) * ratio)
+            g = int(g1 + (g2 - g1) * ratio)
+            b = int(b1 + (b2 - b1) * ratio)
             pygame.draw.line(surf, (r, g, b), (0, y), (WINDOW_WIDTH, y))
         return surf
+
+    def get_gradient_for_level(self, level):
+        # Change gradient every 3 levels, then stick to last
+        idx = min((level - 1) // 3, len(self.ocean_gradients) - 1)
+        return self.ocean_gradients[idx]
 
     def draw_ocean(self):
         self.screen.blit(self.ocean_gradient, (0, 0))
