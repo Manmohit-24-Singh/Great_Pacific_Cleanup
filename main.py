@@ -187,6 +187,7 @@ class Game:
                         # Incorrect -> game over
                         self.state = 'GAMEOVER'
                         if self.logged_in_user:
+                            print(f"DEBUG: Trivia Success - Syncing Personal Best of {self.high_score} to Firebase")
                             self.firebase.update_high_score(self.high_score)
 
     def _handle_general_events(self, event):
@@ -430,6 +431,7 @@ class Game:
                 self.shake_amount = 10
                 self.shake_timer = 0.4
                 if self.logged_in_user:
+                    print(f"DEBUG: Game Over - Current Score: {self.player.score}, Personal Best: {self.high_score}")
                     self.firebase.update_high_score(self.high_score)
 
         self.scroll_y += current_scroll_speed * dt
@@ -446,6 +448,7 @@ class Game:
         if status == "TIMEOUT":
             self.state = 'GAMEOVER'
             if self.logged_in_user:
+                print(f"DEBUG: Trivia Timeout - Syncing Personal Best of {self.high_score} to Firebase")
                 self.firebase.update_high_score(self.high_score)
 
     def check_collisions(self):

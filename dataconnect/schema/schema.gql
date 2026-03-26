@@ -1,0 +1,5 @@
+type User @table(key: "id") {
+  id: String!
+  username: String!
+  highScore: Int!
+}
