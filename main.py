@@ -15,15 +15,66 @@ import webbrowser
 from trivia import TriviaManager
 
 class Game:
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, new_state):
+        old_state = getattr(self, '_state', None)
+        self._state = new_state
+        
+        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER']
+        playing_states = ['PLAYING']
+        
+        if new_state in menu_states and old_state not in menu_states:
+            self.play_music("MENU")
+        elif new_state in playing_states and old_state not in ['PLAYING', 'PAUSED']:
+            self.play_music("PLAYING")
+
+    def play_music(self, state):
+        try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            if state == "MENU":
+                pygame.mixer.music.load(os.path.join("sounds", "evil conspiracy.mp3"))
+                pygame.mixer.music.set_volume(0.5)
+                # No endevent needed for looping menu track
+                pygame.mixer.music.set_endevent(0)
+                pygame.mixer.music.play(-1)
+            elif state == "PLAYING":
+                pygame.mixer.music.load(self.music_queue[self.current_track_idx])
+                pygame.mixer.music.set_volume(0.5)
+                # Set endevent to trigger track cycling
+                pygame.mixer.music.set_endevent(self.MUSIC_END)
+                pygame.mixer.music.play()
+        except:
+            pass
+
+    def play_next_track(self):
+        try:
+            self.current_track_idx = (self.current_track_idx + 1) % len(self.music_queue)
+            pygame.mixer.music.load(self.music_queue[self.current_track_idx])
+            pygame.mixer.music.play()
+        except:
+            pass
+
     def __init__(self):
         pygame.init()
         try:
             pygame.mixer.init()
-            pygame.mixer.music.load(os.path.join("sounds", "the great escape.mp3"))
-            pygame.mixer.music.set_volume(0.5)
-            pygame.mixer.music.play(-1)
-        except Exception as e:
-            print(f"Error loading music: {e}")
+        except:
+            pass
+        self.MUSIC_END = pygame.USEREVENT + 1
+
+        self.music_queue = [
+            os.path.join("sounds", "jetpack joyride theme.mp3"),
+            os.path.join("sounds", "the great escape.mp3"),
+            os.path.join("sounds", "aliens.mp3"),
+            os.path.join("sounds", "scary fractal patterns.mp3")
+        ]
+        self.current_track_idx = 0
+
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
@@ -49,6 +100,7 @@ class Game:
         self.shake_timer = 0
 
         # Pre-cached blue gradient (no AI image)
+        self.theme = 'surface'
         self.ocean_gradient = self.make_ocean()
 
         # Pre-generate some wave line positions for animation
@@ -91,6 +143,10 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+                
+            if event.type == getattr(self, 'MUSIC_END', None):
+                if self.state == 'PLAYING':
+                    self.play_next_track()
             
             if self.state in ['LOGIN', 'SIGNUP']:
                 self._handle_auth_events(event)
@@ -293,6 +349,17 @@ class Game:
     def _update_playing(self, dt):
         current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
 
+        # Dynamic Visual Progression
+        new_theme = self.theme
+        if self.spawner.difficulty_level >= 11:
+            new_theme = 'abyss'
+        elif self.spawner.difficulty_level >= 6:
+            new_theme = 'twilight'
+            
+        if new_theme != self.theme:
+            self.theme = new_theme
+            self.ocean_gradient = self.make_ocean()
+
         self.player.update(dt)
         self.spawner.update(dt, self.entities)
         self.entities.update(dt, current_scroll_speed)
@@ -480,12 +547,24 @@ class Game:
 
     def make_ocean(self):
         surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+        theme = getattr(self, 'theme', 'surface')
         for y in range(WINDOW_HEIGHT):
             ratio = y / WINDOW_HEIGHT
-            # Slightly more vibrant blues
-            r = int(5 + 20 * ratio)
-            g = int(50 + 80 * ratio)
-            b = int(140 + 80 * ratio)
+            if theme == 'surface':
+                # Vibrant blues
+                r = int(5 + 20 * ratio)
+                g = int(50 + 80 * ratio)
+                b = int(140 + 80 * ratio)
+            elif theme == 'twilight':
+                # Deep purples/blues
+                r = int(10 + 30 * ratio)
+                g = int(10 + 20 * ratio)
+                b = int(60 + 50 * ratio)
+            else: # abyss
+                # Very dark, almost black
+                r = int(2 + 5 * ratio)
+                g = int(5 + 15 * ratio)
+                b = int(15 + 20 * ratio)
             pygame.draw.line(surf, (r, g, b), (0, y), (WINDOW_WIDTH, y))
         return surf
 
