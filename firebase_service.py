@@ -140,8 +140,12 @@ class FirebaseService:
 
         try:
             response = requests.post(DATA_CONNECT_URL, json=body, headers=headers)
+            json_res = response.json()
             if response.status_code == 200:
-                return response.json().get("data", {})
+                if "errors" in json_res:
+                    print(f"GraphQL Errors: {json_res['errors']}")
+                    return None
+                return json_res.get("data", {})
             else:
                 print(f"Data Connect Error: {response.status_code} - {response.text}")
                 return None
@@ -235,6 +239,13 @@ class FirebaseService:
                 })
             return leaderboard
         return []
+    def get_global_high_score(self):
+        """Fetch the highest score in the world."""
+        leaderboard = self.get_leaderboard(limit=1)
+        if leaderboard:
+            return leaderboard[0].get("score", 0)
+        return 0
+
     def get_user_high_score(self):
         """Fetch the current user's high score from Data Connect."""
         if not self.user:

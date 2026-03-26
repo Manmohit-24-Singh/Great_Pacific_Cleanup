@@ -120,7 +120,11 @@ class Game:
 
         # Persistent high score
         self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
-        self.high_score = self.load_highscore()
+        if not self.logged_in_user:
+            # For Guest/Initial screen, try fetching world high score
+            self.high_score = self.firebase.get_global_high_score() or self.load_highscore()
+        else:
+            self.high_score = self.load_highscore()
 
         # Trivia Minigame
         self.trivia_manager = TriviaManager()
@@ -210,6 +214,8 @@ class Game:
                 self.logged_in_user = None
                 self.username = "Guest"
                 self.state = 'PLAYING'
+                # Show world high score for guest
+                self.high_score = self.firebase.get_global_high_score()
                 self.reset_game()
             elif event.key == pygame.K_l and self.state == 'MENU':
                 self.state = 'LEADERBOARD'

@@ -42,3 +42,9 @@ mutation CreateGameSession($userId: UUID!, $score: Int!) @auth(level: PUBLIC) {
     }
   )
 }
+
+# Delete all high scores and sessions (Admin/Development only)
+mutation DeleteAllScores @auth(level: PUBLIC) {
+  highScore_deleteMany(all: true)
+  gameSession_deleteMany(all: true)
+}
