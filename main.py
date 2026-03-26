@@ -138,6 +138,9 @@ class Game:
         self.particles = ParticleSystem()
         self.floating_texts = []
         self.trivia_used = False
+        self.last_difficulty_level = 0
+        self.level_announcement_timer = 0.0
+        self.level_announcement_text = ""
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -349,11 +352,23 @@ class Game:
     def _update_playing(self, dt):
         current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
 
+        # Level up logic
+        if self.spawner.difficulty_level > getattr(self, 'last_difficulty_level', 0):
+            self.last_difficulty_level = self.spawner.difficulty_level
+            disp_level = self.spawner.difficulty_level + 1
+            if disp_level % 5 == 0:
+                self.level_announcement_timer = 3.0
+                self.level_announcement_text = f"LEVEL {disp_level}!"
+        
+        if getattr(self, 'level_announcement_timer', 0) > 0:
+            self.level_announcement_timer -= dt
+
         # Dynamic Visual Progression
+        disp_level = self.spawner.difficulty_level + 1
         new_theme = self.theme
-        if self.spawner.difficulty_level >= 11:
+        if disp_level >= 10:
             new_theme = 'abyss'
-        elif self.spawner.difficulty_level >= 6:
+        elif disp_level >= 5:
             new_theme = 'twilight'
             
         if new_theme != self.theme:
@@ -516,7 +531,11 @@ class Game:
             ft.draw(render_surf)
 
         self.screen.blit(render_surf, (sx, sy))
-        self.ui.draw_hud(self.player, self.high_score, self.spawner.difficulty_level)
+        disp_level = self.spawner.difficulty_level + 1
+        self.ui.draw_hud(self.player, self.high_score, disp_level)
+        
+        if getattr(self, 'level_announcement_timer', 0) > 0:
+            self.ui.draw_level_announcement(self.level_announcement_text, self.level_announcement_timer)
 
         # Guest notice at bottom of screen
         if not self.logged_in_user:

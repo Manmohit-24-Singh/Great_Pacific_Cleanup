@@ -562,3 +562,38 @@ class UI:
         # Escape hint
         esc_txt = self.small_font.render("Press ESC to resume", True, (120, 120, 120))
         self.surface.blit(esc_txt, (cx - esc_txt.get_width() // 2, 580))
+
+    def draw_level_announcement(self, text, timer, max_time=3.0):
+        if timer <= 0: return
+        
+        progress = 1.0 - (timer / max_time)
+        
+        # Fade in quickly, hold, fade out slowly
+        alpha = 255
+        if progress < 0.1:
+            alpha = int(255 * (progress / 0.1))
+        elif progress > 0.7:
+            alpha = int(255 * (1.0 - (progress - 0.7) / 0.3))
+            
+        # Slight scale-up effect
+        size = int(58 + 20 * progress)
+        
+        try:
+            announce_font = pygame.font.SysFont("impact", size)
+        except:
+            announce_font = pygame.font.SysFont(None, size)
+            
+        text_surf = announce_font.render(text, True, (255, 235, 120))
+        shadow_surf = announce_font.render(text, True, (0, 0, 0))
+        
+        # Apply alpha onto surface via blit trick because text surface alpha works better via set_alpha
+        text_surf.set_alpha(alpha)
+        shadow_surf.set_alpha(alpha)
+        
+        # Slide up slightly
+        base_y = WINDOW_HEIGHT // 3
+        y = int(base_y - 50 * progress)
+        cx = WINDOW_WIDTH // 2 - text_surf.get_width() // 2
+        
+        self.surface.blit(shadow_surf, (cx + 3, y + 3))
+        self.surface.blit(text_surf, (cx, y))
