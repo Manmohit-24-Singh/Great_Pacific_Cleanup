@@ -76,6 +76,9 @@ class Game:
         self.trivia_manager = TriviaManager()
         self.trivia_used = False
 
+        # Level progression
+        self.level = 1
+
         # State
         self.state = 'MENU'
         self.reset_game()
@@ -88,6 +91,7 @@ class Game:
         self.particles = ParticleSystem()
         self.floating_texts = []
         self.trivia_used = False
+        self.level = 1  # Reset level to 1 on new game
 
     def handle_events(self):
         for event in pygame.event.get():
