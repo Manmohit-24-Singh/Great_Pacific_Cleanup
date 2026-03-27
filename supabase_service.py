@@ -6,22 +6,11 @@ are identical so the rest of the codebase (main.py, etc.) does not need
 to change its calls.
 """
 
-import os
-import sys
 import json
-from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Load environment variables from .env file
-# When running as a PyInstaller bundle, resolve .env relative to the bundle dir
-if getattr(sys, 'frozen', False):
-    _base_dir = sys._MEIPASS
-else:
-    _base_dir = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(_base_dir, '.env'))
-
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_URL = "https://vrmlheewcaouwigdvxrd.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZybWxoZWV3Y2FvdXdpZ2R2eHJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NDEyODcsImV4cCI6MjA5MDIxNzI4N30.PGN2UC_KfajwSSEBog5n_lnnoAhRrq13KxOtun9igh8"
 
 
 class SupabaseService:

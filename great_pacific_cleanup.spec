@@ -20,7 +20,6 @@ a = Analysis(
         ('assets', 'assets'),
         ('sounds', 'sounds'),
         ('supabase_service.py', '.'),
-        ('.env', '.'),
     ],
     hiddenimports=[
         'supabase',

@@ -47,12 +47,6 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      # Create .env from GitHub Secrets (not committed to repo)
-      - name: Create .env file
-        run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-
       - name: Build with PyInstaller
         run: pyinstaller great_pacific_cleanup.spec
 
