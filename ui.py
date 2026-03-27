@@ -237,11 +237,11 @@ class UI:
         self.surface.blit(sc, (WINDOW_WIDTH // 2 - sc.get_width() // 2, by + 40))
 
         hi_label = self.subtitle_font.render(f"HIGH SCORE: {high_score}", True, (120, 220, 255))
-        self.surface.blit(hi_label, (WINDOW_WIDTH // 2 - hi_label.get_width() // 2, by + box_h + 32))
+        self.surface.blit(hi_label, (WINDOW_WIDTH // 2 - hi_label.get_width() // 2, by + box_h + 20))
 
         if score == high_score and score > 0:
             new_best = self.subtitle_font.render("NEW HIGH SCORE!", True, (255, 235, 120))
-            self.surface.blit(new_best, (WINDOW_WIDTH // 2 - new_best.get_width() // 2, by + box_h + 42))
+            self.surface.blit(new_best, (WINDOW_WIDTH // 2 - new_best.get_width() // 2, by + box_h + 55))
 
         # Pulsing restart
         pulse = int(180 + 75 * math.sin(time_elapsed * 3))

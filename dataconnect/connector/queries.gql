@@ -1,0 +1,29 @@
+# Get a user by their Google/Firebase Auth ID
+query GetUser($googleId: String!) @auth(level: PUBLIC) {
+  users(where: { googleId: { eq: $googleId } }) {
+    id
+    googleId
+    displayName
+    createdAt
+  }
+}
+
+# Get the leaderboard (top high scores, descending)
+query GetLeaderboard($limit: Int!) @auth(level: PUBLIC) {
+  highScores(orderBy: [{ score: DESC }], limit: $limit) {
+    id
+    score
+    updatedAt
+    user {
+      displayName
+    }
+  }
+}
+
+# Get a user's high score
+query GetUserHighScore($userId: UUID!) @auth(level: PUBLIC) {
+  highScores(where: { userId: { eq: $userId } }) {
+    id
+    score
+  }
+}
