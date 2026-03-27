@@ -459,8 +459,11 @@ class UI:
         self.surface.blit(name_h, (200, header_y))
         self.surface.blit(score_h, (WINDOW_WIDTH - 180, header_y))
 
-        if not leaderboard:
-            msg = self.font.render("Loading...", True, WHITE)
+        if leaderboard is None:
+            msg = self.font.render("Network Error. Please Log In.", True, (255, 100, 100))
+            self.surface.blit(msg, (WINDOW_WIDTH // 2 - msg.get_width() // 2, WINDOW_HEIGHT // 2))
+        elif len(leaderboard) == 0:
+            msg = self.subtitle_font.render("No scores available or Connection Error.", True, (200, 100, 100))
             self.surface.blit(msg, (WINDOW_WIDTH // 2 - msg.get_width() // 2, WINDOW_HEIGHT // 2))
         else:
             for i, entry in enumerate(leaderboard):

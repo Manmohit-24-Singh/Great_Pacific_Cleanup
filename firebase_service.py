@@ -2,6 +2,9 @@ import pyrebase
 import requests
 import json
 import os
+import google.auth
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2 import service_account
 from firebase_config import firebaseConfig
 
 # Data Connect REST API base URL
@@ -17,6 +20,14 @@ DATA_CONNECT_URL = (
 FIREBASE_API_KEY = firebaseConfig.get("apiKey", "")
 
 
+# Scopes required for Data Connect API
+GCP_SCOPES = [
+    "https://www.googleapis.com/auth/cloud-platform",
+]
+
+# Path to service account key file (download from Firebase Console)
+SERVICE_ACCOUNT_KEY = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
+
 class FirebaseService:
     def __init__(self):
         # Firebase Auth (pyrebase) — for user login/signup
@@ -30,6 +41,42 @@ class FirebaseService:
         self.user = None
         self.id_token = None
         self.user_uuid = None  # Data Connect internal UUID for the User row
+
+        # Google Cloud credentials — for Data Connect REST API
+        self._gcp_credentials = None
+        self._init_gcp_credentials()
+
+    def _init_gcp_credentials(self):
+        """Load Google Cloud credentials (service account key or ADC)."""
+        # 1. Try service account key file first
+        if os.path.exists(SERVICE_ACCOUNT_KEY):
+            try:
+                self._gcp_credentials = service_account.Credentials.from_service_account_file(
+                    SERVICE_ACCOUNT_KEY, scopes=GCP_SCOPES
+                )
+                print("DEBUG: Loaded credentials from serviceAccountKey.json")
+                return
+            except Exception as e:
+                print(f"WARNING: Failed to load service account key: {e}")
+
+        # 2. Fallback to Application Default Credentials
+        try:
+            self._gcp_credentials, _ = google.auth.default(scopes=GCP_SCOPES)
+            print("DEBUG: Loaded Application Default Credentials")
+        except Exception as e:
+            print(f"WARNING: Could not load Google Cloud credentials: {e}")
+            self._gcp_credentials = None
+
+    def _get_gcp_access_token(self):
+        """Get a fresh OAuth 2.0 access token for the Data Connect API."""
+        if not self._gcp_credentials:
+            return None
+        try:
+            self._gcp_credentials.refresh(GoogleAuthRequest())
+            return self._gcp_credentials.token
+        except Exception as e:
+            print(f"WARNING: Failed to refresh GCP credentials: {e}")
+            return None
 
     # ── Auth ────────────────────────────────────────────────────────────
 
@@ -110,13 +157,16 @@ class FirebaseService:
     def _do_graphql_request(self, query, variables=None, auth_token=None, use_api_key=False, _retried=False):
         """Low-level method to execute a GraphQL request against Data Connect."""
         headers = {"Content-Type": "application/json"}
-        if auth_token:
-            headers["x-firebase-auth-token"] = auth_token
+        
+        # WE MUST ALWAYS PASS GCP ADMIN TOKEN TO DATA CONNECT REST ENDPOINT
+        access_token = self._get_gcp_access_token()
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+        else:
+            print("ERROR: Missing google cloud credentials for Data Connect")
 
-        # Build the URL — append API key for unauthenticated requests
+        # Build the URL
         url = DATA_CONNECT_URL
-        if use_api_key and FIREBASE_API_KEY:
-            url = f"{DATA_CONNECT_URL}?key={FIREBASE_API_KEY}"
 
         body = {"query": query}
         if variables:
@@ -222,17 +272,23 @@ class FirebaseService:
                 }
             }
         """
-        # Leaderboard is public — no auth needed
-        result = self._execute_graphql_public(query, {"limit": limit})
-        if result and result.get("highScores"):
-            leaderboard = []
+        # Use authenticated request if logged in, otherwise fallback to public (which may fail due to backend rules)
+        if self.id_token:
+            result = self._execute_graphql(query, {"limit": limit})
+        else:
+            result = self._execute_graphql_public(query, {"limit": limit})
+        
+        if result is None:
+            return None
+            
+        leaderboard = []
+        if result.get("highScores"):
             for entry in result["highScores"]:
                 leaderboard.append({
                     "username": entry.get("user", {}).get("displayName", "Unknown"),
                     "score": entry.get("score", 0)
                 })
-            return leaderboard
-        return []
+        return leaderboard
 
     def get_global_high_score(self):
         """Fetch the highest score in the world (public, no auth)."""
