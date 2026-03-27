@@ -1,0 +1,11 @@
+specVersion: "v1beta"
+serviceId: "great-pacific-cleanup-service"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "great-pacific-cleanup-database"
+      cloudSql:
+        instanceId: "great-pacific-cleanup-db"
+connectorDirs: ["./connector"]
