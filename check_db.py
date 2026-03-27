@@ -1,22 +1,18 @@
-from firebase_service import FirebaseService
+"""
+Check DB — Quick utility to verify Supabase connectivity.
+"""
+from supabase_service import SupabaseService
+
 
 def check():
-    fs = FirebaseService()
-    query = """
-        query GetCount {
-            highScores {
-                id
-            }
-        }
-    """
-    # Leaderboard data is public — no auth needed
-    result = fs._execute_graphql_public(query)
-    if result:
-        scores = result.get("highScores", [])
-        print(f"DEBUG: Found {len(scores)} high scores in DB.")
-    else:
-        print("DEBUG: Could not fetch scores.")
+    svc = SupabaseService()
+    try:
+        res = svc.supabase.table("scores").select("id", count="exact").execute()
+        count = len(res.data) if res.data else 0
+        print(f"DEBUG: Found {count} score rows in Supabase.")
+    except Exception as e:
+        print(f"DEBUG: Could not fetch scores — {e}")
+
 
 if __name__ == "__main__":
     check()
-

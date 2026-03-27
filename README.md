@@ -1,133 +1,76 @@
 # Great Pacific Cleanup
 
-A 2D ocean cleanup game built with Python and Pygame. Drive a boat, collect trash, avoid hazards, and compete on the global leaderboard.
+Welcome to **Great Pacific Cleanup**! This is a fun and fast-paced 2D ocean cleanup game where you drive a boat, collect trash, avoid dangerous hazards, and compete against other players worldwide. Clean up the ocean, learn some environmental trivia, and see if you can claim the top spot on the leaderboard!
 
-## 🌊 Play Now
+## Features
 
-[▶ Play in Browser](https://manmohit-24-singh.github.io/Great_Pacific_Cleanup/) — no download required!
+- **User Accounts:** Sign up and log in to save your progress.
+- **High Score Tracking:** Your personal best score is always saved to your profile.
+- **Global Leaderboard:** Compete in real-time with players around the world to see who can clean up the most trash.
 
-> *Web demo includes full gameplay but no login or leaderboard. Download the desktop version for the full experience.*
+---
 
-## Download & Play
+## How to Download & Play
+### Windows
+1. Download `GreatPacificCleanup-windows.zip` from the latest release.
+2. Unzip the folder.
+3. Double-click `GreatPacificCleanup.exe` to launch the game.
 
-### Pre-built Binaries (No Python Required)
-Download the latest release for your platform from the [GitHub Releases](https://github.com/Manmohit-24-Singh/Great_Pacific_Cleanup/releases) page.
+> **Note:** Windows SmartScreen may show a blue warning saying "Windows protected your PC". To get past it:
+> 1. Click **"More info"**
+> 2. Click **"Run anyway"**
+> 
+> This is a standard Windows warning for apps that are not from the Microsoft Store, and it is completely safe to dismiss.
 
-| Platform | Instructions |
-|---|---|
-| **Windows** | Extract the zip, run `GreatPacificCleanup.exe` |
-| **macOS** | Extract the zip, run `GreatPacificCleanup`. If blocked by Gatekeeper: `xattr -d com.apple.quarantine GreatPacificCleanup` |
-| **Linux** | Extract the zip, run `./GreatPacificCleanup`. May need: `chmod +x GreatPacificCleanup` |
-
-### Run from Source
-
-1. Clone the repository
+### Mac
+1. Download `GreatPacificCleanup-macos.zip` from the latest release.
+2. Unzip the folder.
+3. Open Terminal and run the following commands:
 ```bash
-git clone https://github.com/Manmohit-24-Singh/Great_Pacific_Cleanup.git
-cd Great_Pacific_Cleanup
+xattr -cr ~/Downloads/GreatPacificCleanup-macos
+chmod +x ~/Downloads/GreatPacificCleanup-macos/GreatPacificCleanup
+~/Downloads/GreatPacificCleanup-macos/GreatPacificCleanup
 ```
 
-2. Create and activate a virtual environment
-```bash
-# Mac/Linux
-python3 -m venv venv
-source venv/bin/activate
+> **Note:** Please make sure to use the actual path on your machine if you moved the folder out of your Downloads! The first command (`xattr`) applies to the **entire unzipped folder**, while the second command (`chmod`) targets the **executable file inside it**.
+> 
+> These commands are required because macOS blocks apps that are not from the App Store. You only need to do this once. If your Mac still blocks the app, open **System Settings > Privacy & Security**, scroll down to the Security section, and click **"Open Anyway"** next to the prompt about GreatPacificCleanup.
 
-# Windows
-python -m venv venv
-venv\Scripts\activate
+### Linux
+1. Download `GreatPacificCleanup-linux.zip` from the latest release.
+2. Unzip the folder.
+3. Open Terminal and run:
+```bash
+chmod +x ~/Downloads/GreatPacificCleanup-linux/GreatPacificCleanup
+~/Downloads/GreatPacificCleanup-linux/GreatPacificCleanup
 ```
 
-3. Install requirements
-```bash
-pip install -r requirements.txt
-```
-
-4. Add your Firebase config
-```bash
-# Create firebase_config.py with your Firebase project credentials
-# (see firebase_config.py.example for the format)
-```
-
-5. Run the game
-```bash
-python3 main.py
-```
+---
 
 ## Gameplay
 
-- **Collect** floating trash to earn points and speed boosts
-- **Avoid** sharks, turtles, oil spills, and cargo containers
-- **Grab power-ups** for temporary abilities:
-  - 🌊 **Eco Net** — increases collection radius for 8 seconds
-  - 🚀 **Turbo** — 1.5× speed for 5 seconds
-  - 🛡️ **Shield** — blocks one hit
-  - ⚡ **Magnetic Hyperdrive** — invulnerability, auto-collection, and 3× speed for 8 seconds
-- **Second Chance Trivia** — answer an environmental question to revive after losing all lives
-- **Dynamic difficulty** — speed and hazards increase as you progress through levels
+- **Collect floating trash** to earn points and build up speed boosts.
+- **Avoid** sharks, sea turtles, oil spills, and cargo containers!
+- **Grab power-ups** for awesome temporary abilities:
+  - **Eco Net** — Increases your collection radius for 8 seconds.
+  - **Turbo** — 1.5× speed boost for 5 seconds.
+  - **Shield** — Gain a protective bubble that blocks one hit.
+  - **Magnetic Hyperdrive** — Grants invulnerability, auto-collection, and 3× speed for 8 seconds!
+- **Second Chance Trivia** — Answer an environmental question correctly to revive yourself after losing all your lives.
+- **Dynamic Difficulty** — The longer you survive, the faster and more challenging the hazards get!
 
 ## Controls
 
 | Key | Action |
 |---|---|
-| W / ↑ | Move up |
-| S / ↓ | Move down |
-| A / ← | Move left |
-| D / → | Move right |
-| Space | Start game / Submit |
-| G | Play as Guest (from menu) |
-| L | View leaderboard |
-| O | Logout |
-| Esc | Pause / Back |
+| **W / ↑** | Move up |
+| **S / ↓** | Move down |
+| **A / ←** | Move left |
+| **D / →** | Move right |
+| **Space** | Start game / Submit answers |
+| **G** | Play as Guest (from the main menu) |
+| **L** | View the global leaderboard |
+| **O** | Log out |
+| **Esc** | Pause the game / Go back |
 
-## Architecture
-
-| Component | Technology |
-|---|---|
-| Game engine | Python + Pygame |
-| Auth | Firebase Authentication |
-| Database | Cloud SQL PostgreSQL (via Firebase Data Connect) |
-| API | Data Connect GraphQL REST API |
-
-## Project Structure
-
-```
-├── main.py                 # Game loop and engine
-├── player.py               # Player boat class
-├── entities.py             # Scrolling entities (trash, animals, hazards, powerups)
-├── spawner.py              # Spawn logic and difficulty scaling
-├── particles.py            # Visual effects and particle trails
-├── ui.py                   # HUD, menus, and screens
-├── settings.py             # Constants and color palettes
-├── trivia.py               # Second-chance trivia questions
-├── firebase_service.py     # Firebase Auth + Data Connect client
-├── firebase_config.py      # Firebase project config (gitignored)
-├── asset_loader.py         # Image loading with PyInstaller support
-├── assets/                 # Sprite images (PNG)
-├── sounds/                 # Music tracks (MP3)
-├── dataconnect/            # Data Connect schema and connectors
-│   ├── schema/schema.gql   # PostgreSQL table definitions
-│   └── connector/          # GraphQL queries and mutations
-├── great_pacific_cleanup.spec  # PyInstaller build config
-├── .github/workflows/      # CI/CD for multi-platform builds
-└── requirements.txt        # Python dependencies
-```
-
-## Building from Source
-
-```bash
-pip install pyinstaller
-pyinstaller great_pacific_cleanup.spec
-# Output: dist/GreatPacificCleanup/
-```
-
-## CI/CD
-
-Pushing a version tag triggers automatic builds for all platforms:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-GitHub Actions will build for Windows, macOS, and Linux, then attach the builds to a GitHub Release.
+Enjoy cleaning the ocean, and good luck!

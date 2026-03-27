@@ -1,24 +1,34 @@
 """
 Reset Leaderboard — Admin utility
 
-NOTE: The DeleteAllScores mutation is set to @auth(level: NO_ACCESS) in the
-Data Connect schema, so it cannot be called from client code.
+Resets all scores in the Supabase database. Requires a valid .env
+with SUPABASE_URL and SUPABASE_ANON_KEY.
 
-To reset the leaderboard, use one of these methods:
-  1. Firebase Console → Data Connect → Run the mutation from the console
-  2. Firebase Admin SDK with service account credentials (server-side only)
-  3. Direct Cloud SQL access via `gcloud sql connect`
+WARNING: This will delete ALL score rows. Use with caution.
 """
+from supabase_service import SupabaseService
+
 
 def reset():
-    print("⚠️  DeleteAllScores is locked to NO_ACCESS for security.")
-    print("   Use the Firebase Console or Admin SDK to reset the leaderboard.")
-    print()
-    print("   To reset the local high score file only:")
+    print("⚠️  This will delete ALL scores from the Supabase database.")
+    confirm = input("Type 'yes' to confirm: ").strip().lower()
+    if confirm != "yes":
+        print("Cancelled.")
+        return
+
+    svc = SupabaseService()
+    try:
+        svc.supabase.table("scores").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        print("✅ All scores deleted from Supabase.")
+    except Exception as e:
+        print(f"❌ Failed to delete scores: {e}")
+
+    # Also reset local high score file
+    print("   Resetting local high_score.txt...")
     with open("high_score.txt", "w") as f:
         f.write("0")
     print("   ✅ Local high_score.txt reset to 0.")
 
+
 if __name__ == "__main__":
     reset()
-

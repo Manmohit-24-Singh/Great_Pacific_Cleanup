@@ -20,7 +20,7 @@ if IS_WEB:
     from firebase_stub import FirebaseService
     SOUND_EXT = ".ogg"
 else:
-    from firebase_service import FirebaseService
+    from supabase_service import SupabaseService as FirebaseService
     import webbrowser
     SOUND_EXT = ".mp3"
 

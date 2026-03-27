@@ -1,7 +1,4 @@
-google-auth==2.49.1
-google-cloud-core==2.5.0
-google-cloud-storage==3.10.1
 pygame==2.6.1
-Pyrebase4==4.9.0
-requests==2.33.0
-requests-toolbelt==1.0.0
+requests
+supabase
+python-dotenv

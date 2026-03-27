@@ -19,10 +19,12 @@ a = Analysis(
     datas=[
         ('assets', 'assets'),
         ('sounds', 'sounds'),
-        ('firebase_config.py', '.'),
+        ('supabase_service.py', '.'),
     ],
     hiddenimports=[
-        'pyrebase',
+        'supabase',
+        'postgrest',
+        'gotrue',
         'requests',
     ],
     hookspath=[],
