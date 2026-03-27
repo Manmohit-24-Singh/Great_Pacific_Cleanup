@@ -32,7 +32,7 @@ chmod +x ~/Downloads/GreatPacificCleanup-macos/GreatPacificCleanup
 ~/Downloads/GreatPacificCleanup-macos/GreatPacificCleanup
 ```
 
-> These commands are required because macOS blocks apps that are not from the App Store. You only need to do this once.
+> **Note:** These commands are required because macOS blocks apps that are not from the App Store. You only need to do this once. If your Mac still blocks the app, open **System Settings > Privacy & Security**, scroll down to the Security section, and click **"Open Anyway"** next to the prompt about GreatPacificCleanup.
 
 ### Linux
 1. Download `GreatPacificCleanup-linux.zip` from the latest release.
