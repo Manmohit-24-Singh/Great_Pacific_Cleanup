@@ -2,7 +2,7 @@
 
 Welcome to **Great Pacific Cleanup**! This is a fun and fast-paced 2D ocean cleanup game where you drive a boat, collect trash, avoid dangerous hazards, and compete against other players worldwide. Clean up the ocean, learn some environmental trivia, and see if you can claim the top spot on the leaderboard!
 
-## ✨ Features
+## Features
 
 - **User Accounts:** Sign up and log in to save your progress.
 - **High Score Tracking:** Your personal best score is always saved to your profile.
@@ -10,7 +10,7 @@ Welcome to **Great Pacific Cleanup**! This is a fun and fast-paced 2D ocean clea
 
 ---
 
-## 🎮 How to Download & Play
+## How to Download & Play
 ### Windows
 1. Download `GreatPacificCleanup-windows.zip` from the latest release.
 2. Unzip the folder.
@@ -45,19 +45,19 @@ chmod +x ~/Downloads/GreatPacificCleanup-linux/GreatPacificCleanup
 
 ---
 
-## 🌊 Gameplay
+## Gameplay
 
 - **Collect floating trash** to earn points and build up speed boosts.
 - **Avoid** sharks, sea turtles, oil spills, and cargo containers!
 - **Grab power-ups** for awesome temporary abilities:
-  - 🌊 **Eco Net** — Increases your collection radius for 8 seconds.
-  - 🚀 **Turbo** — 1.5× speed boost for 5 seconds.
-  - 🛡️ **Shield** — Gain a protective bubble that blocks one hit.
-  - ⚡ **Magnetic Hyperdrive** — Grants invulnerability, auto-collection, and 3× speed for 8 seconds!
+  - **Eco Net** — Increases your collection radius for 8 seconds.
+  - **Turbo** — 1.5× speed boost for 5 seconds.
+  - **Shield** — Gain a protective bubble that blocks one hit.
+  - **Magnetic Hyperdrive** — Grants invulnerability, auto-collection, and 3× speed for 8 seconds!
 - **Second Chance Trivia** — Answer an environmental question correctly to revive yourself after losing all your lives.
 - **Dynamic Difficulty** — The longer you survive, the faster and more challenging the hazards get!
 
-## 🕹️ Controls
+## Controls
 
 | Key | Action |
 |---|---|
@@ -71,4 +71,4 @@ chmod +x ~/Downloads/GreatPacificCleanup-linux/GreatPacificCleanup
 | **O** | Log out |
 | **Esc** | Pause the game / Go back |
 
-Enjoy cleaning the ocean, and good luck! 🛥️🌊
+Enjoy cleaning the ocean, and good luck!
