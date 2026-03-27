@@ -1,5 +1,5 @@
 # Create a new user
-mutation CreateUser($googleId: String!, $displayName: String!) @auth(level: PUBLIC) {
+mutation CreateUser($googleId: String!, $displayName: String!) @auth(level: USER) {
   user_insert(
     data: {
       googleId: $googleId
@@ -10,7 +10,7 @@ mutation CreateUser($googleId: String!, $displayName: String!) @auth(level: PUBL
 }
 
 # Update an existing high score by its ID
-mutation UpdateHighScore($id: UUID!, $score: Int!) @auth(level: PUBLIC) {
+mutation UpdateHighScore($id: UUID!, $score: Int!) @auth(level: USER) {
   highScore_update(
     id: $id
     data: {
@@ -21,7 +21,7 @@ mutation UpdateHighScore($id: UUID!, $score: Int!) @auth(level: PUBLIC) {
 }
 
 # Create a new high score entry
-mutation CreateHighScore($userId: UUID!, $score: Int!) @auth(level: PUBLIC) {
+mutation CreateHighScore($userId: UUID!, $score: Int!) @auth(level: USER) {
   highScore_insert(
     data: {
       userId: $userId
@@ -33,7 +33,7 @@ mutation CreateHighScore($userId: UUID!, $score: Int!) @auth(level: PUBLIC) {
 }
 
 # Record a game session
-mutation CreateGameSession($userId: UUID!, $score: Int!) @auth(level: PUBLIC) {
+mutation CreateGameSession($userId: UUID!, $score: Int!) @auth(level: USER) {
   gameSession_insert(
     data: {
       userId: $userId
@@ -44,7 +44,7 @@ mutation CreateGameSession($userId: UUID!, $score: Int!) @auth(level: PUBLIC) {
 }
 
 # Delete all high scores and sessions (Admin/Development only)
-mutation DeleteAllScores @auth(level: PUBLIC) {
+mutation DeleteAllScores @auth(level: NO_ACCESS) {
   highScore_deleteMany(all: true)
   gameSession_deleteMany(all: true)
 }
