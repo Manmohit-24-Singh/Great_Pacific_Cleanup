@@ -1,5 +1,5 @@
 # Get a user by their Google/Firebase Auth ID
-query GetUser($googleId: String!) @auth(level: PUBLIC) {
+query GetUser($googleId: String!) @auth(level: USER) {
   users(where: { googleId: { eq: $googleId } }) {
     id
     googleId
@@ -21,7 +21,7 @@ query GetLeaderboard($limit: Int!) @auth(level: PUBLIC) {
 }
 
 # Get a user's high score
-query GetUserHighScore($userId: UUID!) @auth(level: PUBLIC) {
+query GetUserHighScore($userId: UUID!) @auth(level: USER) {
   highScores(where: { userId: { eq: $userId } }) {
     id
     score

@@ -1,0 +1,86 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'   # Triggered on version tags like v1.0.0
+  workflow_dispatch:  # Manual trigger for testing
+
+permissions:
+  contents: write  # Needed for creating releases
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact_name: GreatPacificCleanup-linux
+          - os: windows-latest
+            artifact_name: GreatPacificCleanup-windows
+          - os: macos-latest
+            artifact_name: GreatPacificCleanup-macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Linux needs display libs for pygame import during build
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libsdl2-mixer-dev libsdl2-image-dev libsdl2-ttf-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller great_pacific_cleanup.spec
+
+      - name: Archive build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/GreatPacificCleanup/
+          retention-days: 30
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create zip archives
+        run: |
+          cd artifacts
+          for dir in */; do
+            name="${dir%/}"
+            zip -r "../${name}.zip" "$dir"
+          done
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            GreatPacificCleanup-linux.zip
+            GreatPacificCleanup-windows.zip
+            GreatPacificCleanup-macos.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false

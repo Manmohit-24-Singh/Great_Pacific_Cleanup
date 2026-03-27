@@ -1,25 +1,24 @@
-from firebase_service import FirebaseService
+"""
+Reset Leaderboard — Admin utility
+
+NOTE: The DeleteAllScores mutation is set to @auth(level: NO_ACCESS) in the
+Data Connect schema, so it cannot be called from client code.
+
+To reset the leaderboard, use one of these methods:
+  1. Firebase Console → Data Connect → Run the mutation from the console
+  2. Firebase Admin SDK with service account credentials (server-side only)
+  3. Direct Cloud SQL access via `gcloud sql connect`
+"""
 
 def reset():
-    fs = FirebaseService()
-    print("Connecting to Data Connect...")
-    
-    query = """
-        mutation DeleteAllScores {
-            highScore_deleteMany(all: true)
-            gameSession_deleteMany(all: true)
-        }
-    """
-    
-    result = fs._execute_graphql(query)
-    if result is not None:
-        print("✅ Success! Leaderboard and Game History have been cleared.")
-        # Also reset the local file
-        with open("high_score.txt", "w") as f:
-            f.write("0")
-        print("✅ Local high_score.txt reset to 0.")
-    else:
-        print("❌ Failed to reset leaderboard. Make sure you have deployed the mutations.")
+    print("⚠️  DeleteAllScores is locked to NO_ACCESS for security.")
+    print("   Use the Firebase Console or Admin SDK to reset the leaderboard.")
+    print()
+    print("   To reset the local high score file only:")
+    with open("high_score.txt", "w") as f:
+        f.write("0")
+    print("   ✅ Local high_score.txt reset to 0.")
 
 if __name__ == "__main__":
     reset()
+

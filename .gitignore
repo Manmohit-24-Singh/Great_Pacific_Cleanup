@@ -2,7 +2,7 @@ venv/
 __pycache__/
 high_score.txt
 .DS_Store
-firebase_config.py
+# firebase_config.py <-- safe to remove since APi key is client side
 serviceAccountKey.json
 build/
 dist/
