@@ -6,9 +6,6 @@ import pytest
 
 pygame.init()
 
-from game import Game
-
-
 # ---------------------------
 # Mock Classes
 # ---------------------------

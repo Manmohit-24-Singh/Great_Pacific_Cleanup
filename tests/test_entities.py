@@ -99,3 +99,4 @@ def test_powerup_update_changes_glow():
     pu.update(1.0, global_scroll_speed=0)
 
     assert pu.glow_phase != initial_phase
+    
