@@ -1,11 +1,14 @@
+import sys
 import os
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 import pygame
 import pytest
 
 pygame.init()
-import spawner.py
+import spawner
 
 #dummy classes
 class DummyGroup:

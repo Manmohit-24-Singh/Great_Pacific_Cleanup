@@ -1,19 +1,19 @@
+import sys
 import os
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 import pygame
 import pytest
 
 pygame.init()
-
-from game import Game
-
-from reset_leaderboard import reset
+import reset_leaderboard as rs
 
 def test_reset_creates_high_score_file_with_zero(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
-    reset()
+    rs.reset()
 
     high_score_file = tmp_path / "high_score.txt"
     assert high_score_file.exists()
@@ -25,7 +25,7 @@ def test_reset_overwrites_existing_high_score_file(tmp_path, monkeypatch):
     high_score_file = tmp_path / "high_score.txt"
     high_score_file.write_text("999")
 
-    reset()
+    rs.reset()
 
     assert high_score_file.read_text() == "0"
 
@@ -33,7 +33,7 @@ def test_reset_overwrites_existing_high_score_file(tmp_path, monkeypatch):
 def test_reset_prints_expected_messages(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
 
-    reset()
+    rs.reset()
 
     captured = capsys.readouterr()
     output = captured.out
