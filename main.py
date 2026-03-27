@@ -120,7 +120,11 @@ class Game:
 
         # Persistent high score
         self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
-        self.high_score = self.load_highscore()
+        if not self.logged_in_user:
+            # For Guest/Initial screen, try fetching world high score
+            self.high_score = self.firebase.get_global_high_score() or self.load_highscore()
+        else:
+            self.high_score = self.load_highscore()
 
         # Trivia Minigame
         self.trivia_manager = TriviaManager()
@@ -187,7 +191,9 @@ class Game:
                         # Incorrect -> game over
                         self.state = 'GAMEOVER'
                         if self.logged_in_user:
+                            print(f"DEBUG: Trivia Failed - Syncing score {self.player.score}, Personal Best {self.high_score}")
                             self.firebase.update_high_score(self.high_score)
+                            self.firebase.record_game_session(self.player.score)
 
     def _handle_general_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -208,6 +214,8 @@ class Game:
                 self.logged_in_user = None
                 self.username = "Guest"
                 self.state = 'PLAYING'
+                # Show world high score for guest
+                self.high_score = self.firebase.get_global_high_score()
                 self.reset_game()
             elif event.key == pygame.K_l and self.state == 'MENU':
                 self.state = 'LEADERBOARD'
@@ -216,6 +224,7 @@ class Game:
                 self.firebase.logout()
                 self.logged_in_user = None
                 self.username = "Guest"
+                self.high_score = self.load_highscore()
             elif event.key == pygame.K_ESCAPE and self.state == 'LEADERBOARD':
                 self.state = 'MENU'
 
@@ -309,7 +318,9 @@ class Game:
             self.logged_in_user = res['user']
             self.username = res['username']
             self.state = 'MENU'
-            # Sync local high score if needed or fetch from DB
+            # Sync local high score from DB
+            self.high_score = self.firebase.get_user_high_score()
+            self.save_highscore()
         else:
             self.auth_error = res['error']
 
@@ -322,6 +333,9 @@ class Game:
             self.logged_in_user = res['user']
             self.username = res['username']
             self.state = 'MENU'
+            # New user has 0 high score
+            self.high_score = 0
+            self.save_highscore()
         else:
             self.auth_error = res['error']
 
@@ -430,7 +444,9 @@ class Game:
                 self.shake_amount = 10
                 self.shake_timer = 0.4
                 if self.logged_in_user:
+                    print(f"DEBUG: Game Over - Current Score: {self.player.score}, Personal Best: {self.high_score}")
                     self.firebase.update_high_score(self.high_score)
+                    self.firebase.record_game_session(self.player.score)
 
         self.scroll_y += current_scroll_speed * dt
         if self.scroll_y > WINDOW_HEIGHT:
@@ -446,7 +462,9 @@ class Game:
         if status == "TIMEOUT":
             self.state = 'GAMEOVER'
             if self.logged_in_user:
+                print(f"DEBUG: Trivia Timeout - Syncing score {self.player.score}, Personal Best {self.high_score}")
                 self.firebase.update_high_score(self.high_score)
+                self.firebase.record_game_session(self.player.score)
 
     def check_collisions(self):
         if self.player.hyperdrive_active:
