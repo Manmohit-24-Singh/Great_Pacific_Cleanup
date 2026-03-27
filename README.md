@@ -32,7 +32,9 @@ chmod +x ~/Downloads/GreatPacificCleanup-macos/GreatPacificCleanup
 ~/Downloads/GreatPacificCleanup-macos/GreatPacificCleanup
 ```
 
-> **Note:** These commands are required because macOS blocks apps that are not from the App Store. You only need to do this once. If your Mac still blocks the app, open **System Settings > Privacy & Security**, scroll down to the Security section, and click **"Open Anyway"** next to the prompt about GreatPacificCleanup.
+> **Note:** Please make sure to use the actual path on your machine if you moved the folder out of your Downloads! The first command (`xattr`) applies to the **entire unzipped folder**, while the second command (`chmod`) targets the **executable file inside it**.
+> 
+> These commands are required because macOS blocks apps that are not from the App Store. You only need to do this once. If your Mac still blocks the app, open **System Settings > Privacy & Security**, scroll down to the Security section, and click **"Open Anyway"** next to the prompt about GreatPacificCleanup.
 
 ### Linux
 1. Download `GreatPacificCleanup-linux.zip` from the latest release.
