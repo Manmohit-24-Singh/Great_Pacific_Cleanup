@@ -11,9 +11,18 @@ from ui import UI
 from entities import PlasticWaste, MarineLife, Hazard, PowerUp
 from particles import ParticleSystem, Bubble, FloatingText
 from asset_loader import resource_path
-from firebase_service import FirebaseService
-import webbrowser
 from trivia import TriviaManager
+
+# Platform detection — Pygbag sets sys.platform to 'emscripten'
+IS_WEB = sys.platform == "emscripten"
+
+if IS_WEB:
+    from firebase_stub import FirebaseService
+    SOUND_EXT = ".ogg"
+else:
+    from firebase_service import FirebaseService
+    import webbrowser
+    SOUND_EXT = ".mp3"
 
 class Game:
     @property
@@ -38,7 +47,7 @@ class Game:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
             if state == "MENU":
-                pygame.mixer.music.load(resource_path(os.path.join("sounds", "evil conspiracy.mp3")))
+                pygame.mixer.music.load(resource_path(os.path.join("sounds", f"evil conspiracy{SOUND_EXT}")))
                 pygame.mixer.music.set_volume(0.5)
                 # No endevent needed for looping menu track
                 pygame.mixer.music.set_endevent(0)
@@ -69,10 +78,10 @@ class Game:
         self.MUSIC_END = pygame.USEREVENT + 1
 
         self.music_queue = [
-            resource_path(os.path.join("sounds", "jetpack joyride theme.mp3")),
-            resource_path(os.path.join("sounds", "the great escape.mp3")),
-            resource_path(os.path.join("sounds", "aliens.mp3")),
-            resource_path(os.path.join("sounds", "scary fractal patterns.mp3"))
+            resource_path(os.path.join("sounds", f"jetpack joyride theme{SOUND_EXT}")),
+            resource_path(os.path.join("sounds", f"the great escape{SOUND_EXT}")),
+            resource_path(os.path.join("sounds", f"aliens{SOUND_EXT}")),
+            resource_path(os.path.join("sounds", f"scary fractal patterns{SOUND_EXT}"))
         ]
         self.current_track_idx = 0
 
@@ -119,10 +128,13 @@ class Game:
         # Time tracking
         self.total_time = 0
 
-        # Persistent high score — stored in user's home dir (writable)
-        save_dir = os.path.join(os.path.expanduser("~"), ".great_pacific_cleanup")
-        os.makedirs(save_dir, exist_ok=True)
-        self.high_score_path = os.path.join(save_dir, "high_score.txt")
+        # Persistent high score — writable user dir on desktop, in-memory on web
+        if IS_WEB:
+            self.high_score_path = None  # No file I/O on web
+        else:
+            save_dir = os.path.join(os.path.expanduser("~"), ".great_pacific_cleanup")
+            os.makedirs(save_dir, exist_ok=True)
+            self.high_score_path = os.path.join(save_dir, "high_score.txt")
         if not self.logged_in_user:
             # For Guest/Initial screen, try fetching world high score
             self.high_score = self.firebase.get_global_high_score() or self.load_highscore()
@@ -240,9 +252,11 @@ class Game:
         elif self.ui.pause_menu_rect.collidepoint(pos):
             self.state = 'MENU'
         elif self.ui.pause_sdg12_rect.collidepoint(pos):
-            webbrowser.open("https://sdgs.un.org/goals/goal12")
+            if not IS_WEB:
+                webbrowser.open("https://sdgs.un.org/goals/goal12")
         elif self.ui.pause_sdg14_rect.collidepoint(pos):
-            webbrowser.open("https://sdgs.un.org/goals/goal14")
+            if not IS_WEB:
+                webbrowser.open("https://sdgs.un.org/goals/goal14")
 
     def check_auth_clicks(self, pos):
         # Check input fields
@@ -344,6 +358,8 @@ class Game:
 
 
     def load_highscore(self):
+        if not self.high_score_path:
+            return 0
         try:
             with open(self.high_score_path, "r", encoding="utf-8") as f:
                 return max(0, int(f.read().strip() or 0))
@@ -351,6 +367,8 @@ class Game:
             return 0
 
     def save_highscore(self):
+        if not self.high_score_path:
+            return
         try:
             with open(self.high_score_path, "w", encoding="utf-8") as f:
                 f.write(str(self.high_score))
@@ -602,7 +620,11 @@ class Game:
 
         # Guest notice at bottom of screen
         if not self.logged_in_user:
-            guest_txt = self.ui.small_font.render("Playing as Guest - scores won't be saved", True, (180, 180, 180))
+            if IS_WEB:
+                notice = "Web Demo — Download for full features"
+            else:
+                notice = "Playing as Guest - scores won't be saved"
+            guest_txt = self.ui.small_font.render(notice, True, (180, 180, 180))
             self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 35))
 
     def _draw_paused(self):

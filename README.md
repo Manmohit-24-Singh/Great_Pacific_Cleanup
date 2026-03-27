@@ -2,6 +2,12 @@
 
 A 2D ocean cleanup game built with Python and Pygame. Drive a boat, collect trash, avoid hazards, and compete on the global leaderboard.
 
+## 🌊 Play Now
+
+[▶ Play in Browser](https://manmohit-24-singh.github.io/Great_Pacific_Cleanup/) — no download required!
+
+> *Web demo includes full gameplay but no login or leaderboard. Download the desktop version for the full experience.*
+
 ## Download & Play
 
 ### Pre-built Binaries (No Python Required)
