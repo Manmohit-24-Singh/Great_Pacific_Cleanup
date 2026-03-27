@@ -2,4 +2,4 @@ venv/
 __pycache__/
 high_score.txt
 .DS_Store
-firebase_config.py
+firebase_config.pyserviceAccountKey.json
