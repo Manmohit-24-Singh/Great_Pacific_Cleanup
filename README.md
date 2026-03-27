@@ -11,11 +11,16 @@ Welcome to **Great Pacific Cleanup**! This is a fun and fast-paced 2D ocean clea
 ---
 
 ## 🎮 How to Download & Play
-
 ### Windows
 1. Download `GreatPacificCleanup-windows.zip` from the latest release.
 2. Unzip the folder.
 3. Double-click `GreatPacificCleanup.exe` to launch the game.
+
+> **Note:** Windows SmartScreen may show a blue warning saying "Windows protected your PC". To get past it:
+> 1. Click **"More info"**
+> 2. Click **"Run anyway"**
+> 
+> This is a standard Windows warning for apps that are not from the Microsoft Store, and it is completely safe to dismiss.
 
 ### Mac
 1. Download `GreatPacificCleanup-macos.zip` from the latest release.
