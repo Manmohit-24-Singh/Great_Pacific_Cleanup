@@ -8,24 +8,22 @@ async def fetch_json(url, method="GET", headers=None, body=None):
         import js
         import json as python_json
         
-        js_headers = js.Object.fromEntries(js.Object.entries(js.JSON.parse(python_json.dumps(headers or {}))))
-        
-        fetch_opts = {
+        js_opts = js.JSON.parse(python_json.dumps({
             "method": method,
-            "headers": js_headers,
-        }
-        if body:
-            fetch_opts["body"] = python_json.dumps(body)
+            "headers": headers or {},
+            **({"body": python_json.dumps(body)} if body else {})
+        }))
+        
+        # In Pygbag/Pyodide, JS promises can be awaited natively
+        response = await js.window.fetch(url, js_opts)
+        text = await response.text()
+        
+        try:
+            res_json = python_json.loads(text)
+        except Exception:
+            res_json = {"text": text}
             
-        # Call JS fetch
-        promise = js.window.fetch(url, js.Object.fromEntries(js.Object.entries(js.JSON.parse(python_json.dumps(fetch_opts)))))
-        response = await asyncio.wrap_future(promise)
-        
-        # Read text
-        text_promise = response.text()
-        text = await asyncio.wrap_future(text_promise)
-        
-        return response.status, python_json.loads(text)
+        return response.status, res_json
     else:
         # Standard desktop fallback (for testing locally)
         import requests
