@@ -43,10 +43,10 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Add your Firebase config
+4. Add your Supabase credentials
 ```bash
-# Create firebase_config.py with your Firebase project credentials
-# (see firebase_config.py.example for the format)
+cp .env.example .env
+# Edit .env and add your SUPABASE_URL and SUPABASE_ANON_KEY
 ```
 
 5. Run the game
@@ -85,9 +85,9 @@ python3 main.py
 | Component | Technology |
 |---|---|
 | Game engine | Python + Pygame |
-| Auth | Firebase Authentication |
-| Database | Cloud SQL PostgreSQL (via Firebase Data Connect) |
-| API | Data Connect GraphQL REST API |
+| Auth | Supabase Authentication (email/password) |
+| Database | Supabase (PostgreSQL) |
+| API | Supabase REST API (supabase-py) |
 
 ## Project Structure
 
@@ -100,17 +100,78 @@ python3 main.py
 ├── ui.py                   # HUD, menus, and screens
 ├── settings.py             # Constants and color palettes
 ├── trivia.py               # Second-chance trivia questions
-├── firebase_service.py     # Firebase Auth + Data Connect client
-├── firebase_config.py      # Firebase project config (gitignored)
+├── supabase_service.py     # Supabase Auth + Database client
+├── firebase_stub.py        # No-op stub for web/WASM builds
 ├── asset_loader.py         # Image loading with PyInstaller support
 ├── assets/                 # Sprite images (PNG)
 ├── sounds/                 # Music tracks (MP3)
-├── dataconnect/            # Data Connect schema and connectors
-│   ├── schema/schema.gql   # PostgreSQL table definitions
-│   └── connector/          # GraphQL queries and mutations
+├── .env.example            # Supabase credentials template
 ├── great_pacific_cleanup.spec  # PyInstaller build config
 ├── .github/workflows/      # CI/CD for multi-platform builds
 └── requirements.txt        # Python dependencies
+```
+
+## Deployment
+
+### Supabase Setup (Backend)
+
+This game connects directly to Supabase — there is no middleman server. Supabase handles both authentication and the database.
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** and run the following:
+
+```sql
+CREATE TABLE IF NOT EXISTS scores (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    username   TEXT NOT NULL,
+    high_score INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (user_id)
+);
+
+ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view scores"
+    ON scores FOR SELECT USING (true);
+
+CREATE POLICY "Users can insert own score"
+    ON scores FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own score"
+    ON scores FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+```
+
+3. Go to **Settings → API** and copy your **Project URL** and **anon/public key**
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### Railway
+
+Railway deployment is **not required** for this project. The game is a Pygame desktop client that calls Supabase's hosted API directly. Supabase handles all server-side concerns (auth, database, RLS).
+
+If you add a FastAPI or Flask server component in the future, you can deploy it to Railway by:
+1. Adding a `Procfile` (e.g., `web: gunicorn app:app`)
+2. Setting `SUPABASE_URL` and `SUPABASE_ANON_KEY` as Railway environment variables
+3. Connecting your GitHub repo to Railway for auto-deploy
+
+### Running Locally
+
+```bash
+python3 -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements.txt
+cp .env.example .env      # then edit with your credentials
+python3 main.py
 ```
 
 ## Building from Source
