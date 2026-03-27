@@ -9,7 +9,7 @@ import pytest
 
 pygame.init()
 
-from reset_leaderboard import reset
+import reset_leaderboard as rs
 
 def test_reset_creates_high_score_file_with_zero(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
