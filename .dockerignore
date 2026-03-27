@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+assets/
+sounds/
+*.apk
+*.tar.gz
+high_score.txt
+serviceAccountKey.json
