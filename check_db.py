@@ -9,7 +9,8 @@ def check():
             }
         }
     """
-    result = fs._execute_graphql(query)
+    # Leaderboard data is public — no auth needed
+    result = fs._execute_graphql_public(query)
     if result:
         scores = result.get("highScores", [])
         print(f"DEBUG: Found {len(scores)} high scores in DB.")
@@ -18,3 +19,4 @@ def check():
 
 if __name__ == "__main__":
     check()
+

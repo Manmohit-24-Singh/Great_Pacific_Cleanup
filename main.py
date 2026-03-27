@@ -10,6 +10,7 @@ from spawner import Spawner
 from ui import UI
 from entities import PlasticWaste, MarineLife, Hazard, PowerUp
 from particles import ParticleSystem, Bubble, FloatingText
+from asset_loader import resource_path
 from firebase_service import FirebaseService
 import webbrowser
 from trivia import TriviaManager
@@ -37,7 +38,7 @@ class Game:
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
             if state == "MENU":
-                pygame.mixer.music.load(os.path.join("sounds", "evil conspiracy.mp3"))
+                pygame.mixer.music.load(resource_path(os.path.join("sounds", "evil conspiracy.mp3")))
                 pygame.mixer.music.set_volume(0.5)
                 # No endevent needed for looping menu track
                 pygame.mixer.music.set_endevent(0)
@@ -68,10 +69,10 @@ class Game:
         self.MUSIC_END = pygame.USEREVENT + 1
 
         self.music_queue = [
-            os.path.join("sounds", "jetpack joyride theme.mp3"),
-            os.path.join("sounds", "the great escape.mp3"),
-            os.path.join("sounds", "aliens.mp3"),
-            os.path.join("sounds", "scary fractal patterns.mp3")
+            resource_path(os.path.join("sounds", "jetpack joyride theme.mp3")),
+            resource_path(os.path.join("sounds", "the great escape.mp3")),
+            resource_path(os.path.join("sounds", "aliens.mp3")),
+            resource_path(os.path.join("sounds", "scary fractal patterns.mp3"))
         ]
         self.current_track_idx = 0
 
@@ -119,7 +120,7 @@ class Game:
         self.total_time = 0
 
         # Persistent high score
-        self.high_score_path = os.path.join(os.path.dirname(__file__), "high_score.txt")
+        self.high_score_path = resource_path("high_score.txt")
         if not self.logged_in_user:
             # For Guest/Initial screen, try fetching world high score
             self.high_score = self.firebase.get_global_high_score() or self.load_highscore()

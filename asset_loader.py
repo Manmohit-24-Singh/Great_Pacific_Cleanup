@@ -5,8 +5,17 @@ Background removal is done manually by the developer on the source PNGs.
 """
 import pygame
 import os
+import sys
 
 _IMAGE_CACHE = {}
+
+
+def resource_path(relative_path):
+    """Get absolute path to resource — works for dev and PyInstaller bundle."""
+    if hasattr(sys, '_MEIPASS'):
+        # Running from PyInstaller bundle
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
 
 
 def load_image(filename, fallback_size=(50, 50), fallback_color=(255, 255, 255), scale=None):
@@ -18,7 +27,7 @@ def load_image(filename, fallback_size=(50, 50), fallback_color=(255, 255, 255),
     if key in _IMAGE_CACHE:
         return _IMAGE_CACHE[key]
 
-    path = os.path.join("assets", filename)
+    path = resource_path(os.path.join("assets", filename))
 
     try:
         surf = pygame.image.load(path).convert_alpha()
@@ -42,3 +51,4 @@ def load_image(filename, fallback_size=(50, 50), fallback_color=(255, 255, 255),
 
     _IMAGE_CACHE[key] = surf
     return surf
+

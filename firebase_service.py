@@ -2,9 +2,6 @@ import pyrebase
 import requests
 import json
 import os
-import google.auth
-from google.auth.transport.requests import Request as GoogleAuthRequest
-from google.oauth2 import service_account
 from firebase_config import firebaseConfig
 
 # Data Connect REST API base URL
@@ -16,13 +13,8 @@ DATA_CONNECT_URL = (
     ":executeGraphql"
 )
 
-# Scopes required for Data Connect API
-GCP_SCOPES = [
-    "https://www.googleapis.com/auth/cloud-platform",
-]
-
-# Path to service account key file (download from Firebase Console)
-SERVICE_ACCOUNT_KEY = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
+# Firebase API key for unauthenticated (PUBLIC) requests
+FIREBASE_API_KEY = firebaseConfig.get("apiKey", "")
 
 
 class FirebaseService:
@@ -39,45 +31,7 @@ class FirebaseService:
         self.id_token = None
         self.user_uuid = None  # Data Connect internal UUID for the User row
 
-        # Google Cloud credentials — for Data Connect REST API
-        self._gcp_credentials = None
-        self._init_gcp_credentials()
-
-    def _init_gcp_credentials(self):
-        """Load Google Cloud credentials (service account key or ADC)."""
-        # 1. Try service account key file first
-        if os.path.exists(SERVICE_ACCOUNT_KEY):
-            try:
-                self._gcp_credentials = service_account.Credentials.from_service_account_file(
-                    SERVICE_ACCOUNT_KEY, scopes=GCP_SCOPES
-                )
-                print("DEBUG: Loaded credentials from serviceAccountKey.json")
-                return
-            except Exception as e:
-                print(f"WARNING: Failed to load service account key: {e}")
-
-        # 2. Fallback to Application Default Credentials
-        try:
-            self._gcp_credentials, _ = google.auth.default(scopes=GCP_SCOPES)
-            print("DEBUG: Loaded Application Default Credentials")
-        except Exception as e:
-            print(f"WARNING: Could not load Google Cloud credentials: {e}")
-            print("  Place serviceAccountKey.json in the project root,")
-            print("  or run: gcloud auth application-default login")
-            self._gcp_credentials = None
-
-    def _get_gcp_access_token(self):
-        """Get a fresh OAuth 2.0 access token for the Data Connect API."""
-        if not self._gcp_credentials:
-            return None
-        try:
-            self._gcp_credentials.refresh(GoogleAuthRequest())
-            return self._gcp_credentials.token
-        except Exception as e:
-            print(f"WARNING: Failed to refresh GCP credentials: {e}")
-            return None
-
-    # ── Auth (unchanged — still uses pyrebase) ─────────────────────────
+    # ── Auth ────────────────────────────────────────────────────────────
 
     def sign_up(self, email, password, username):
         if not self.auth:
@@ -112,6 +66,16 @@ class FirebaseService:
         self.id_token = None
         self.user_uuid = None
 
+    def _refresh_token(self):
+        """Refresh the Firebase ID token if it has expired (~1 hour)."""
+        if self.user and self.auth:
+            try:
+                refreshed = self.auth.refresh(self.user['refreshToken'])
+                self.id_token = refreshed['idToken']
+                self.user['idToken'] = refreshed['idToken']
+            except Exception as e:
+                print(f"Token refresh failed: {e}")
+
     def _parse_error(self, e):
         try:
             error_json = e.args[1]
@@ -123,24 +87,53 @@ class FirebaseService:
     # ── Data Connect helpers ───────────────────────────────────────────
 
     def _execute_graphql(self, query, variables=None):
-        """Execute a GraphQL operation against Data Connect."""
-        access_token = self._get_gcp_access_token()
-        if not access_token:
-            print("ERROR: No GCP access token available. Run: gcloud auth application-default login")
+        """Execute a GraphQL operation against Data Connect (authenticated).
+
+        Uses the Firebase Auth ID token for authorization.
+        Automatically refreshes the token if the first attempt returns 401.
+        """
+        if not self.id_token:
+            print("ERROR: Not authenticated. Please log in first.")
             return None
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}",
-        }
+        return self._do_graphql_request(query, variables, auth_token=self.id_token)
+
+    def _execute_graphql_public(self, query, variables=None):
+        """Execute a public GraphQL query (no auth required).
+
+        Used for operations with @auth(level: PUBLIC) like GetLeaderboard.
+        The Data Connect REST API still requires project-level identification,
+        so we pass the Firebase API key as a query parameter.
+        """
+        return self._do_graphql_request(query, variables, auth_token=None, use_api_key=True)
+
+    def _do_graphql_request(self, query, variables=None, auth_token=None, use_api_key=False, _retried=False):
+        """Low-level method to execute a GraphQL request against Data Connect."""
+        headers = {"Content-Type": "application/json"}
+        if auth_token:
+            headers["x-firebase-auth-token"] = auth_token
+
+        # Build the URL — append API key for unauthenticated requests
+        url = DATA_CONNECT_URL
+        if use_api_key and FIREBASE_API_KEY:
+            url = f"{DATA_CONNECT_URL}?key={FIREBASE_API_KEY}"
 
         body = {"query": query}
         if variables:
             body["variables"] = variables
 
         try:
-            response = requests.post(DATA_CONNECT_URL, json=body, headers=headers)
+            response = requests.post(url, json=body, headers=headers)
             json_res = response.json()
+
+            # If we get a 401/403, try refreshing the token once
+            if response.status_code in (401, 403) and auth_token and not _retried:
+                self._refresh_token()
+                if self.id_token and self.id_token != auth_token:
+                    return self._do_graphql_request(
+                        query, variables, auth_token=self.id_token, _retried=True
+                    )
+
             if response.status_code == 200:
                 if "errors" in json_res:
                     print(f"GraphQL Errors: {json_res['errors']}")
@@ -229,7 +222,8 @@ class FirebaseService:
                 }
             }
         """
-        result = self._execute_graphql(query, {"limit": limit})
+        # Leaderboard is public — no auth needed
+        result = self._execute_graphql_public(query, {"limit": limit})
         if result and result.get("highScores"):
             leaderboard = []
             for entry in result["highScores"]:
@@ -239,8 +233,9 @@ class FirebaseService:
                 })
             return leaderboard
         return []
+
     def get_global_high_score(self):
-        """Fetch the highest score in the world."""
+        """Fetch the highest score in the world (public, no auth)."""
         leaderboard = self.get_leaderboard(limit=1)
         if leaderboard:
             return leaderboard[0].get("score", 0)
