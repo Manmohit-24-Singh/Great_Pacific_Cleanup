@@ -59,6 +59,12 @@ chmod +x ~/Downloads/GreatPacificCleanup-linux/GreatPacificCleanup
 - **Second Chance Trivia** — Answer an environmental question correctly to revive yourself after losing all your lives.
 - **Dynamic Difficulty** — The longer you survive, the faster and more challenging the hazards get!
 
+## Unit Testing
+1. Follow the Download and Play steps, listed above
+2. In the bash terminal, run the following command:
+
+PYTHONPATH=. pytest -v
+
 ## Controls
 
 | Key | Action |
