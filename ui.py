@@ -292,17 +292,11 @@ class UI:
         self.surface.blit(prompt, (px, mid_y + 10))
 
         # Guest option always visible when not logged in
-        if not logged_in:
-            guest_txt = self.subtitle_font.render("Press 'G' to Play as Guest", True, (180, 180, 180))
-            self.surface.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, mid_y + 45))
-
         if logged_in:
             leader_txt = self.subtitle_font.render("Press 'L' for World Leaderboard", True, (255, 255, 100))
             self.surface.blit(leader_txt, (WINDOW_WIDTH // 2 - leader_txt.get_width() // 2, mid_y + 45))
-            
             logout_txt = self.small_font.render("Press 'O' to Logout", True, (200, 100, 100))
             self.surface.blit(logout_txt, (WINDOW_WIDTH // 2 - logout_txt.get_width() // 2, mid_y + 75))
-
             user_txt = self.small_font.render(f"Logged in as: {username}", True, (200, 255, 200))
             self.surface.blit(user_txt, (10, WINDOW_HEIGHT - 30))
 

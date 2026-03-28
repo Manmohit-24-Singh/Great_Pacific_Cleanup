@@ -13,16 +13,9 @@ from particles import ParticleSystem, Bubble, FloatingText
 from asset_loader import resource_path
 from trivia import TriviaManager
 
-# Platform detection — Pygbag sets sys.platform to 'emscripten'
-IS_WEB = sys.platform == "emscripten"
-
-if IS_WEB:
-    from firebase_stub import FirebaseService
-    SOUND_EXT = ".ogg"
-else:
-    from supabase_service import SupabaseService
-    import webbrowser
-    SOUND_EXT = ".mp3"
+from supabase_service import SupabaseService
+import webbrowser
+SOUND_EXT = ".mp3"
 
 class Game:
     @property
@@ -128,13 +121,10 @@ class Game:
         # Time tracking
         self.total_time = 0
 
-        # Persistent high score — writable user dir on desktop, in-memory on web
-        if IS_WEB:
-            self.high_score_path = None  # No file I/O on web
-        else:
-            save_dir = os.path.join(os.path.expanduser("~"), ".great_pacific_cleanup")
-            os.makedirs(save_dir, exist_ok=True)
-            self.high_score_path = os.path.join(save_dir, "high_score.txt")
+        # Persistent high score — writable user dir on desktop
+        save_dir = os.path.join(os.path.expanduser("~"), ".great_pacific_cleanup")
+        os.makedirs(save_dir, exist_ok=True)
+        self.high_score_path = os.path.join(save_dir, "high_score.txt")
         if not self.logged_in_user:
             # For Guest/Initial screen, try fetching world high score
             self.high_score = self.firebase.get_global_high_score() or self.load_highscore()
@@ -252,11 +242,9 @@ class Game:
         elif self.ui.pause_menu_rect.collidepoint(pos):
             self.state = 'MENU'
         elif self.ui.pause_sdg12_rect.collidepoint(pos):
-            if not IS_WEB:
-                webbrowser.open("https://sdgs.un.org/goals/goal12")
+            webbrowser.open("https://sdgs.un.org/goals/goal12")
         elif self.ui.pause_sdg14_rect.collidepoint(pos):
-            if not IS_WEB:
-                webbrowser.open("https://sdgs.un.org/goals/goal14")
+            webbrowser.open("https://sdgs.un.org/goals/goal14")
 
     def check_auth_clicks(self, pos):
         # Check input fields
@@ -620,10 +608,7 @@ class Game:
 
         # Guest notice at bottom of screen
         if not self.logged_in_user:
-            if IS_WEB:
-                notice = "Web Demo — Download for full features"
-            else:
-                notice = "Playing as Guest - scores won't be saved"
+            notice = "Playing as Guest - scores won't be saved"
             guest_txt = self.ui.small_font.render(notice, True, (180, 180, 180))
             self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 35))
 
