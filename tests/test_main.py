@@ -1,10 +1,21 @@
 import os
 os.environ["SDL_VIDEODRIVER"] = "dummy"
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 
 import pygame
 import pytest
+from main import Game
 
 pygame.init()
+
+@pytest.fixture
+def game(monkeypatch):
+    monkeypatch.setattr("main.SupabaseService", MockFirebase)
+    monkeypatch.setattr("main.Spawner", MockSpawner)
+    monkeypatch.setattr("main.UI", MockUI)
+
+    g = Game()
+    return g
 
 # ---------------------------
 # Mock Classes
@@ -49,20 +60,6 @@ class MockUI:
     def draw_hud(self, *args): pass
     def draw_pause_screen(self): pass
     def draw_game_over(self, *args): pass
-
-
-# ---------------------------
-# Fixture
-# ---------------------------
-@pytest.fixture
-def game(monkeypatch):
-    monkeypatch.setattr("game.FirebaseService", MockFirebase)
-    monkeypatch.setattr("game.Spawner", MockSpawner)
-    monkeypatch.setattr("game.UI", MockUI)
-
-    g = Game()
-    return g
-
 
 # ---------------------------
 # State Tests

@@ -2,44 +2,87 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-import pygame
-import pytest
+import reset_leaderboard
 
-pygame.init()
 
-from reset_leaderboard import reset
+class DummyTable:
+    def __init__(self):
+        self.deleted = False
+        self.executed = False
 
-def test_reset_creates_high_score_file_with_zero(tmp_path, monkeypatch):
+    def delete(self):
+        self.deleted = True
+        return self
+
+    def neq(self, *args, **kwargs):
+        return self
+
+    def execute(self):
+        self.executed = True
+        return {"status": "ok"}
+
+
+class DummySupabase:
+    def __init__(self):
+        self.table_obj = DummyTable()
+
+    def table(self, name):
+        assert name == "scores"
+        return self.table_obj
+
+
+class DummySupabaseService:
+    def __init__(self):
+        self.supabase = DummySupabase()
+
+
+def test_reset_calls_supabase_delete(monkeypatch, tmp_path):
+    dummy_service = DummySupabaseService()
+
+    monkeypatch.setattr(reset_leaderboard, "SupabaseService", lambda: dummy_service)
+    monkeypatch.setattr("builtins.input", lambda *args: "yes")
+
     monkeypatch.chdir(tmp_path)
 
-    rs.reset()
+    reset_leaderboard.reset()
 
-    high_score_file = tmp_path / "high_score.txt"
-    assert high_score_file.exists()
-    assert high_score_file.read_text() == "0"
+    assert dummy_service.supabase.table_obj.deleted is True
+    assert dummy_service.supabase.table_obj.executed is True
+    assert (tmp_path / "high_score.txt").read_text() == "0"
 
-def test_reset_overwrites_existing_high_score_file(tmp_path, monkeypatch):
+
+def test_reset_prints_expected_messages(monkeypatch, capsys, tmp_path):
+    dummy_service = DummySupabaseService()
+
+    monkeypatch.setattr(reset_leaderboard, "SupabaseService", lambda: dummy_service)
+    monkeypatch.setattr("builtins.input", lambda *args: "yes")
+
     monkeypatch.chdir(tmp_path)
 
-    high_score_file = tmp_path / "high_score.txt"
-    high_score_file.write_text("999")
-
-    rs.reset()
-
-    assert high_score_file.read_text() == "0"
-
-
-def test_reset_prints_expected_messages(tmp_path, monkeypatch, capsys):
-    monkeypatch.chdir(tmp_path)
-
-    rs.reset()
+    reset_leaderboard.reset()
 
     captured = capsys.readouterr()
-    output = captured.out
+    output = captured.out.lower()
 
-    assert "DeleteAllScores is locked to NO_ACCESS for security." in output
-    assert "Use the Firebase Console or Admin SDK to reset the leaderboard." in output
-    assert "To reset the local high score file only:" in output
-    assert "Local high_score.txt reset to 0." in output
+    assert "delete all scores" in output
+    assert "deleted from supabase" in output
+    assert "reset to 0" in output
+
+
+def test_reset_cancelled_when_user_does_not_confirm(monkeypatch, capsys, tmp_path):
+    dummy_service = DummySupabaseService()
+
+    monkeypatch.setattr(reset_leaderboard, "SupabaseService", lambda: dummy_service)
+    monkeypatch.setattr("builtins.input", lambda *args: "no")
+
+    monkeypatch.chdir(tmp_path)
+
+    reset_leaderboard.reset()
+
+    captured = capsys.readouterr()
+    output = captured.out.lower()
+
+    assert "cancelled" in output
+    assert dummy_service.supabase.table_obj.deleted is False
+    assert not (tmp_path / "high_score.txt").exists()
