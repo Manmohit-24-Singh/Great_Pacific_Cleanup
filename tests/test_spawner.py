@@ -86,7 +86,7 @@ def test_update_increases_difficulty_and_reduces_spawn_interval(monkeypatch):
 
     assert s.difficulty_level == 1
     assert s.spawn_interval == pytest.approx(old_interval-0.08)
-    assert s.time_elapsed == 0.1
+    assert s.time_elapsed == pytest.approx(0.1)
 
 
 def test_spawn_interval_has_minimum_cap():
