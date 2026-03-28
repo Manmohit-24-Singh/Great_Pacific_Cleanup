@@ -20,7 +20,7 @@ if IS_WEB:
     from firebase_stub import FirebaseService
     SOUND_EXT = ".ogg"
 else:
-    from supabase_service import SupabaseService as FirebaseService
+    from supabase_service import SupabaseService
     import webbrowser
     SOUND_EXT = ".mp3"
 
@@ -90,7 +90,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.ui = UI(self.screen)
         self.particles = ParticleSystem()
-        self.firebase = FirebaseService()
+        self.firebase = SupabaseService()
         self.logged_in_user = None
         self.username = "Guest"
 
