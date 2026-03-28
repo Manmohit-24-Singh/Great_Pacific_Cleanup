@@ -113,6 +113,19 @@ def test_update_spawns_first_hyperdrive_once(monkeypatch):
     assert group.added[0].kind == "powerup"
     assert group.added[0].powerup_type == "hyperdrive"
 
+def test_first_hyperdrive_only_spawns_once(monkeypatch):
+    monkeypatch.setattr(spawner, "PowerUp", FakePowerUp)
+
+    s = spawner.Spawner()
+    group = DummyGroup()
+
+    s.update(4.0, group, hyperdrive=False)
+    assert len(group.added) == 1
+
+    s.update(1.0, group, hyperdrive=False)
+    # no second guaranteed hyperdrive should be added automatically
+    assert s.spawned_first_hyperdrive is True
+
 def test_update_calls_spawn_entity_when_spawn_timer_reaches_interval():
     s = spawner.Spawner()
     group = DummyGroup()
