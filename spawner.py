@@ -15,22 +15,22 @@ class Spawner:
         # Time and spawns move significantly faster during hyperdrive
         actual_dt = dt * (5.0 if hyperdrive else 1.0)
         self.time_elapsed += actual_dt
-        
+
         # Increase difficulty
         if self.time_elapsed > DIFFICULTY_TIMER:
             self.difficulty_level += 1
             self.time_elapsed -= DIFFICULTY_TIMER
-            # Smoothly reduce spawn interval with a hard cap to prevent impossible difficulty
             self.spawn_interval = max(0.4, self.spawn_interval - 0.08)
-            
+
         # Guarantee a hyperdrive drop early in the run
         if self.time_elapsed >= 4.0 and not self.spawned_first_hyperdrive:
             self.spawned_first_hyperdrive = True
-            x = random.randint(150, WINDOW_WIDTH - 150) # Drop closer to center
+            x = random.randint(150, WINDOW_WIDTH - 150)
             y = random.randint(-200, -50)
             ent = PowerUp(x, y, 'hyperdrive')
             entity_group.add(ent)
-            
+            return
+
         self.spawn_timer += dt
         if self.spawn_timer >= self.spawn_interval:
             self.spawn_timer = 0
