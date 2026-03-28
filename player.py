@@ -54,12 +54,15 @@ class Player(pygame.sprite.Sprite):
         self.tilt += (target_tilt - self.tilt) * min(1, 12 * dt)
 
         # Timers
+        hyperdrive_just_ended = False
+
         if self.hyperdrive_timer > 0:
             self.hyperdrive_timer -= dt
             if self.hyperdrive_timer <= 0:
                 self.hyperdrive_active = False
                 self.is_invulnerable = True
-                self.invulnerable_timer = 1.0  # Safe grace period
+                self.invulnerable_timer = 1.0
+                hyperdrive_just_ended = True
 
         current_speed = self.speed
         if self.hyperdrive_active:
@@ -77,7 +80,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.pos
 
         # Invulnerability timer
-        if self.invulnerable_timer > 0:
+        if self.is_invulnerable and not hyperdrive_just_ended:
             self.invulnerable_timer -= dt
             if self.invulnerable_timer <= 0:
                 self.is_invulnerable = False
