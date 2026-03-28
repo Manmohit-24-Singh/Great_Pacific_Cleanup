@@ -79,4 +79,7 @@ PYTHONPATH=. pytest -v
 | **O** | Log out |
 | **Esc** | Pause the game / Go back |
 
+## Credits
+Audio files were sourced from https://epidemicsound.com and distributed in MP3 format. Credit is also given to Gemini 3.0 for assisting in identifying issues within the sequence diagrams and for contributing ideas for smaller features that aligned with our technical stack. All code was implemented by our team, guided by YouTube tutorials and official documentation. All additional assets including documentation, written content, and visual elements such as the sea turtle, fish, waves, sharks, oil spills, and cargo containers were created entirely by us.
+
 Enjoy cleaning the ocean, and good luck!
