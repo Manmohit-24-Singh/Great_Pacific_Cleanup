@@ -159,6 +159,8 @@ class Game:
                 self._handle_settings_events(event)
             elif self.state == 'HOW_TO_PLAY':
                 self._handle_how_to_play_events(event)
+            elif self.state == 'GAMEOVER':
+                self._handle_gameover_events(event)
             else:
                 self._handle_general_events(event)
 
@@ -190,6 +192,16 @@ class Game:
                             print(f"DEBUG: Trivia Failed - Syncing score {self.player.score}, Personal Best {self.high_score}")
                             self.firebase.update_high_score(self.high_score)
                             self.firebase.record_game_session(self.player.score)
+
+    def _handle_gameover_events(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            self.state = 'MENU'
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.ui.gameover_play_again_rect.collidepoint(event.pos):
+                self.reset_game()
+                self.state = 'PLAYING'
+            elif self.ui.gameover_menu_rect.collidepoint(event.pos):
+                self.state = 'MENU'
 
     def _handle_how_to_play_events(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:

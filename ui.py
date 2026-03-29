@@ -56,6 +56,10 @@ class UI:
         self.how_to_play_rect = pygame.Rect(0, 0, 0, 0)
         self.htp_back_rect = pygame.Rect(0, 0, 0, 0)
 
+        # Game over button rects
+        self.gameover_play_again_rect = pygame.Rect(0, 0, 0, 0)
+        self.gameover_menu_rect = pygame.Rect(0, 0, 0, 0)
+
     # HUD
     def draw_hud(self, player, high_score, level):
         if player.score != self.last_score:
@@ -210,7 +214,7 @@ class UI:
         pygame.draw.rect(score_box, (15, 25, 45, 200), (0, 0, box_w, box_h), border_radius=12)
         pygame.draw.rect(score_box, (40, 180, 220, 120), (0, 0, box_w, box_h), 2, border_radius=12)
         bx = WINDOW_WIDTH // 2 - box_w // 2
-        by = WINDOW_HEIGHT // 2 - 20
+        by = WINDOW_HEIGHT // 2 - 80
         self.surface.blit(score_box, (bx, by))
 
         label = self.subtitle_font.render("FINAL SCORE", True, (120, 180, 200))
@@ -225,9 +229,18 @@ class UI:
             new_best = self.subtitle_font.render("NEW HIGH SCORE!", True, (255, 235, 120))
             self.surface.blit(new_best, (WINDOW_WIDTH // 2 - new_best.get_width() // 2, by + box_h + 55))
 
+        # Play Again button
+        btn_w = 240
+        self.gameover_play_again_rect = pygame.Rect(WINDOW_WIDTH // 2 - btn_w // 2, by + box_h + 90, btn_w, 48)
+        self.draw_btn("PLAY AGAIN", self.gameover_play_again_rect, (100, 255, 100))
+
+        # Main Menu button
+        self.gameover_menu_rect = pygame.Rect(WINDOW_WIDTH // 2 - btn_w // 2, by + box_h + 150, btn_w, 48)
+        self.draw_btn("MAIN MENU", self.gameover_menu_rect, (150, 150, 255))
+
         pulse = int(180 + 75 * math.sin(pygame.time.get_ticks() / 333))
         prompt = self.font.render("PRESS SPACE TO RESTART", True, (pulse, 255, pulse))
-        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 200))
+        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 240))
 
     # START SCREEN
     def draw_start_screen(self, time_elapsed, high_score, logged_in=False, username=""):
