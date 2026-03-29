@@ -27,7 +27,7 @@ class Game:
         old_state = getattr(self, '_state', None)
         self._state = new_state
 
-        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER', 'SETTINGS']
+        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER', 'SETTINGS', 'HOW_TO_PLAY']
         playing_states = ['PLAYING']
 
         if new_state in menu_states and old_state not in menu_states:
@@ -157,6 +157,8 @@ class Game:
                 self._handle_trivia_events(event)
             elif self.state == 'SETTINGS':
                 self._handle_settings_events(event)
+            elif self.state == 'HOW_TO_PLAY':
+                self._handle_how_to_play_events(event)
             else:
                 self._handle_general_events(event)
 
@@ -188,6 +190,13 @@ class Game:
                             print(f"DEBUG: Trivia Failed - Syncing score {self.player.score}, Personal Best {self.high_score}")
                             self.firebase.update_high_score(self.high_score)
                             self.firebase.record_game_session(self.player.score)
+
+    def _handle_how_to_play_events(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.state = 'MENU'
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.ui.htp_back_rect.collidepoint(event.pos):
+                self.state = 'MENU'
 
     def _handle_settings_events(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
@@ -251,6 +260,8 @@ class Game:
             if self.state == 'MENU':
                 if self.ui.settings_rect.collidepoint(event.pos):
                     self.state = 'SETTINGS'
+                elif self.ui.how_to_play_rect.collidepoint(event.pos):
+                    self.state = 'HOW_TO_PLAY'
 
     def check_pause_clicks(self, pos):
         if self.ui.pause_resume_rect.collidepoint(pos):
@@ -545,6 +556,8 @@ class Game:
             self.ui.draw_start_screen(self.total_time, self.high_score, self.logged_in_user, self.username)
         elif self.state == 'SETTINGS':
             self.ui.draw_settings_screen(self.music_on, self.music_volume)
+        elif self.state == 'HOW_TO_PLAY':
+            self.ui.draw_how_to_play_screen()
         elif self.state == 'LOGIN':
             self.ui.draw_login_screen(self.auth_email, self.auth_password, self.auth_error, self.auth_loading)
         elif self.state == 'SIGNUP':

@@ -52,6 +52,10 @@ class UI:
         self.settings_vol_down_rect = pygame.Rect(0, 0, 0, 0)
         self.settings_vol_up_rect = pygame.Rect(0, 0, 0, 0)
 
+        # How to play button rects
+        self.how_to_play_rect = pygame.Rect(0, 0, 0, 0)
+        self.htp_back_rect = pygame.Rect(0, 0, 0, 0)
+
     # HUD
     def draw_hud(self, player, high_score, level):
         if player.score != self.last_score:
@@ -280,6 +284,10 @@ class UI:
         self.settings_rect = pygame.Rect(WINDOW_WIDTH // 2 - 110, mid_y - 88, 220, 40)
         self.draw_btn("SETTINGS", self.settings_rect, (120, 120, 180), small=True)
 
+        # How to play button
+        self.how_to_play_rect = pygame.Rect(WINDOW_WIDTH // 2 - 110, mid_y - 40, 220, 40)
+        self.draw_btn("HOW TO PLAY", self.how_to_play_rect, (80, 160, 200), small=True)
+
         box = pygame.Surface((WINDOW_WIDTH - 80, 160), pygame.SRCALPHA)
         box.fill((10, 20, 40, 160))
         pygame.draw.rect(box, (40, 180, 220, 100), (0, 0, WINDOW_WIDTH - 80, 160), 1, border_radius=8)
@@ -300,6 +308,75 @@ class UI:
 
         ver = self.small_font.render("v2.0  |  Save the Ocean", True, (80, 100, 120))
         self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 25))
+
+    # HOW TO PLAY SCREEN
+    def draw_how_to_play_screen(self):
+        self.surface.fill(OCEAN_DEEP)
+        self.draw_bg()
+
+        title = self.title_font.render("HOW TO PLAY", True, (80, 220, 255))
+        self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 40))
+
+        sections = [
+            {
+                "heading": "Movement",
+                "color": (100, 220, 255),
+                "lines": [
+                    "Use Arrow Keys or WASD to move your vessel",
+                    "Collect plastic waste floating in the ocean",
+                ]
+            },
+            {
+                "heading": "Scoring",
+                "color": (100, 255, 180),
+                "lines": [
+                    "Each piece of plastic collected = +10 points",
+                    "Power-ups collected = +20 points",
+                    "Vaporizing obstacles with Hyperdrive = +50 points",
+                ]
+            },
+            {
+                "heading": "Hazards",
+                "color": (255, 100, 100),
+                "lines": [
+                    "Avoid marine life and ocean hazards",
+                    "Oil spills will slow your vessel down",
+                    "You have 3 lives - lose them all to trigger trivia",
+                ]
+            },
+            {
+                "heading": "Power-ups",
+                "color": (255, 220, 100),
+                "lines": [
+                    "Shield  -  absorbs one hit",
+                    "Turbo   -  temporary speed boost",
+                    "Eco Net -  expanded collection radius",
+                    "Hyperdrive - magnetic pull + invincibility",
+                ]
+            },
+            {
+                "heading": "Second Chance",
+                "color": (200, 150, 255),
+                "lines": [
+                    "Answer a trivia question correctly to revive",
+                    "Wrong answer or timeout means game over",
+                ]
+            },
+        ]
+
+        y = 130
+        for section in sections:
+            heading_surf = self.subtitle_font.render(section["heading"], True, section["color"])
+            self.surface.blit(heading_surf, (60, y))
+            y += 26
+            for line in section["lines"]:
+                line_surf = self.small_font.render(f"  {line}", True, (200, 210, 220))
+                self.surface.blit(line_surf, (60, y))
+                y += 22
+            y += 10
+
+        self.htp_back_rect = pygame.Rect(WINDOW_WIDTH // 2 - 110, WINDOW_HEIGHT - 70, 220, 44)
+        self.draw_btn("BACK TO MENU", self.htp_back_rect, (180, 100, 100), small=True)
 
     # SETTINGS SCREEN
     def draw_settings_screen(self, music_on, volume):
