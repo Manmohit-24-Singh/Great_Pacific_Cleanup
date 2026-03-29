@@ -57,6 +57,10 @@ class UI:
         self.how_to_play_rect = pygame.Rect(0, 0, 0, 0)
         self.htp_back_rect = pygame.Rect(0, 0, 0, 0)
 
+        # SDG link button rects for main menu
+        self.menu_sdg12_rect = pygame.Rect(0, 0, 0, 0)
+        self.menu_sdg14_rect = pygame.Rect(0, 0, 0, 0)
+
         # Game over button rects
         self.gameover_play_again_rect = pygame.Rect(0, 0, 0, 0)
         self.gameover_menu_rect = pygame.Rect(0, 0, 0, 0)
@@ -302,8 +306,18 @@ class UI:
         self.how_to_play_rect = pygame.Rect(WINDOW_WIDTH // 2 - 110, mid_y - 40, 220, 40)
         self.draw_btn("HOW TO PLAY", self.how_to_play_rect, (80, 160, 200), small=True)
 
-        ver = self.small_font.render("v2.0  |  Save the Ocean", True, (80, 100, 120))
-        self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 25))
+        # SDG section at bottom of menu
+        cx = WINDOW_WIDTH // 2
+        btn_w = 300
+        pygame.draw.line(self.surface, (60, 100, 140), (cx - 130, mid_y + 80), (cx + 130, mid_y + 80), 1)
+        sdg_label = self.small_font.render("LEARN MORE", True, (120, 180, 220))
+        self.surface.blit(sdg_label, (cx - sdg_label.get_width() // 2, mid_y + 88))
+
+        self.menu_sdg12_rect = pygame.Rect(cx - btn_w // 2, mid_y + 120, btn_w, 44)
+        self.draw_btn("SDG 12: Responsible Consumption", self.menu_sdg12_rect, (80, 160, 255), small=True)
+
+        self.menu_sdg14_rect = pygame.Rect(cx - btn_w // 2, mid_y + 180, btn_w, 44)
+        self.draw_btn("SDG 14: Life Below Water", self.menu_sdg14_rect, (0, 180, 200), small=True)
 
     # HOW TO PLAY SCREEN
     def draw_how_to_play_screen(self):
