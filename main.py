@@ -276,6 +276,10 @@ class Game:
                     self.state = 'SETTINGS'
                 elif self.ui.how_to_play_rect.collidepoint(event.pos):
                     self.state = 'HOW_TO_PLAY'
+                elif self.ui.menu_sdg12_rect.collidepoint(event.pos):
+                    webbrowser.open("https://sdgs.un.org/goals/goal12")
+                elif self.ui.menu_sdg14_rect.collidepoint(event.pos):
+                    webbrowser.open("https://sdgs.un.org/goals/goal14")
 
     def check_pause_clicks(self, pos):
         if self.ui.pause_resume_rect.collidepoint(pos):
