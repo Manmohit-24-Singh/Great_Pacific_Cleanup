@@ -243,10 +243,6 @@ class UI:
         self.gameover_menu_rect = pygame.Rect(WINDOW_WIDTH // 2 - btn_w // 2, by + box_h + 150, btn_w, 48)
         self.draw_btn("MAIN MENU", self.gameover_menu_rect, (150, 150, 255))
 
-        pulse = int(180 + 75 * math.sin(pygame.time.get_ticks() / 333))
-        prompt = self.font.render("PRESS SPACE TO RESTART", True, (pulse, 255, pulse))
-        self.surface.blit(prompt, (WINDOW_WIDTH // 2 - prompt.get_width() // 2, WINDOW_HEIGHT // 2 + 240))
-
     # START SCREEN
     def draw_start_screen(self, time_elapsed, high_score, logged_in=False, username=""):
         self.surface.fill(OCEAN_DEEP)
@@ -306,7 +302,7 @@ class UI:
         self.how_to_play_rect = pygame.Rect(WINDOW_WIDTH // 2 - 110, mid_y - 40, 220, 40)
         self.draw_btn("HOW TO PLAY", self.how_to_play_rect, (80, 160, 200), small=True)
 
-        # SDG section at bottom of menu
+        # SDG section
         cx = WINDOW_WIDTH // 2
         btn_w = 300
         pygame.draw.line(self.surface, (60, 100, 140), (cx - 130, mid_y + 80), (cx + 130, mid_y + 80), 1)
@@ -399,7 +395,6 @@ class UI:
         cx = WINDOW_WIDTH // 2
         y = 160
 
-        # Music toggle
         toggle_label = self.subtitle_font.render("Music", True, (200, 210, 220))
         self.surface.blit(toggle_label, (cx - 140, y + 10))
         toggle_text = "ON" if music_on else "OFF"
@@ -409,7 +404,6 @@ class UI:
 
         y += 80
 
-        # Volume slider
         vol_label = self.subtitle_font.render("Volume", True, (200, 210, 220))
         self.surface.blit(vol_label, (cx - 140, y + 10))
 
@@ -431,7 +425,6 @@ class UI:
 
         y += 80
 
-        # Controls section
         controls_label = self.subtitle_font.render("Controls", True, (100, 220, 255))
         self.surface.blit(controls_label, (cx - 140, y))
         y += 30
@@ -451,7 +444,6 @@ class UI:
             self.surface.blit(desc_surf, (cx - 140 + key_surf.get_width(), y))
             y += 24
 
-        # Back button
         self.settings_back_rect = pygame.Rect(cx - 110, WINDOW_HEIGHT - 70, 220, 44)
         self.draw_btn("BACK TO MENU", self.settings_back_rect, (180, 100, 100), small=True)
 
@@ -601,8 +593,21 @@ class UI:
         self.surface.blit(title, (WINDOW_WIDTH // 2 - title.get_width() // 2, 80))
 
         if question_data:
-            q_surf = self.hud_font.render(question_data["question"], True, WHITE)
-            self.surface.blit(q_surf, (WINDOW_WIDTH // 2 - q_surf.get_width() // 2, 160))
+            words = question_data["question"].split()
+            lines = []
+            current = ""
+            for word in words:
+                test = current + (" " if current else "") + word
+                if self.hud_font.size(test)[0] > WINDOW_WIDTH - 100:
+                    lines.append(current)
+                    current = word
+                else:
+                    current = test
+            if current:
+                lines.append(current)
+            for li, line in enumerate(lines):
+                q_surf = self.hud_font.render(line, True, WHITE)
+                self.surface.blit(q_surf, (WINDOW_WIDTH // 2 - q_surf.get_width() // 2, 160 + li * 32))
 
             for i, option in enumerate(question_data["options"]):
                 y = 240 + i * 60
