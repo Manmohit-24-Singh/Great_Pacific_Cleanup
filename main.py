@@ -99,6 +99,7 @@ class Game:
         self.theme = 'surface'
         self.music_on = True
         self.music_volume = 0.5
+        self.previous_state = 'MENU'
         self.ocean_gradient = self.make_ocean()
 
         self.wave_lines = []
@@ -212,10 +213,10 @@ class Game:
 
     def _handle_settings_events(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.state = 'MENU'
+            self.state = self.previous_state
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.ui.settings_back_rect.collidepoint(event.pos):
-                self.state = 'MENU'
+                self.state = self.previous_state
             elif self.ui.settings_music_toggle_rect.collidepoint(event.pos):
                 self.music_on = not self.music_on
                 try:
@@ -271,6 +272,7 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.state == 'MENU':
                 if self.ui.settings_rect.collidepoint(event.pos):
+                    self.previous_state = 'MENU'
                     self.state = 'SETTINGS'
                 elif self.ui.how_to_play_rect.collidepoint(event.pos):
                     self.state = 'HOW_TO_PLAY'
@@ -284,6 +286,7 @@ class Game:
         elif self.ui.pause_menu_rect.collidepoint(pos):
             self.state = 'MENU'
         elif self.ui.pause_settings_rect.collidepoint(pos):
+            self.previous_state = 'PAUSED'
             self.state = 'SETTINGS'
         elif self.ui.pause_sdg12_rect.collidepoint(pos):
             webbrowser.open("https://sdgs.un.org/goals/goal12")
