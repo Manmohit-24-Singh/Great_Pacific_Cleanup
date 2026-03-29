@@ -283,6 +283,8 @@ class Game:
             self.state = 'PLAYING'
         elif self.ui.pause_menu_rect.collidepoint(pos):
             self.state = 'MENU'
+        elif self.ui.pause_settings_rect.collidepoint(pos):
+            self.state = 'SETTINGS'
         elif self.ui.pause_sdg12_rect.collidepoint(pos):
             webbrowser.open("https://sdgs.un.org/goals/goal12")
         elif self.ui.pause_sdg14_rect.collidepoint(pos):

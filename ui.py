@@ -44,6 +44,7 @@ class UI:
         self.pause_menu_rect = pygame.Rect(0, 0, 0, 0)
         self.pause_sdg12_rect = pygame.Rect(0, 0, 0, 0)
         self.pause_sdg14_rect = pygame.Rect(0, 0, 0, 0)
+        self.pause_settings_rect = pygame.Rect(0, 0, 0, 0)
 
         # Settings button rects
         self.settings_rect = pygame.Rect(0, 0, 0, 0)
@@ -628,18 +629,21 @@ class UI:
         self.pause_menu_rect = pygame.Rect(cx - btn_w // 2, 330, btn_w, btn_h)
         self.draw_btn("MAIN MENU", self.pause_menu_rect, (200, 100, 100))
 
-        pygame.draw.line(self.surface, (60, 100, 140), (cx - 130, 410), (cx + 130, 410), 1)
-        sdg_label = self.small_font.render("LEARN MORE", True, (120, 180, 220))
-        self.surface.blit(sdg_label, (cx - sdg_label.get_width() // 2, 418))
+        self.pause_settings_rect = pygame.Rect(cx - btn_w // 2, 395, btn_w, btn_h)
+        self.draw_btn("SETTINGS", self.pause_settings_rect, (120, 120, 180))
 
-        self.pause_sdg12_rect = pygame.Rect(cx - btn_w // 2, 445, btn_w, btn_h)
+        pygame.draw.line(self.surface, (60, 100, 140), (cx - 130, 460), (cx + 130, 460), 1)
+        sdg_label = self.small_font.render("LEARN MORE", True, (120, 180, 220))
+        self.surface.blit(sdg_label, (cx - sdg_label.get_width() // 2, 468))
+
+        self.pause_sdg12_rect = pygame.Rect(cx - btn_w // 2, 495, btn_w, btn_h)
         self.draw_btn("SDG 12: Responsible Consumption", self.pause_sdg12_rect, (80, 160, 255), small=True)
 
-        self.pause_sdg14_rect = pygame.Rect(cx - btn_w // 2, 508, btn_w, btn_h)
+        self.pause_sdg14_rect = pygame.Rect(cx - btn_w // 2, 558, btn_w, btn_h)
         self.draw_btn("SDG 14: Life Below Water", self.pause_sdg14_rect, (0, 180, 200), small=True)
 
         esc_txt = self.small_font.render("Press ESC to resume", True, (120, 120, 120))
-        self.surface.blit(esc_txt, (cx - esc_txt.get_width() // 2, 580))
+        self.surface.blit(esc_txt, (cx - esc_txt.get_width() // 2, 630))
 
     def draw_level_announcement(self, text, timer, max_time=3.0):
         if timer <= 0: return
