@@ -214,7 +214,7 @@ class UI:
         pygame.draw.rect(score_box, (15, 25, 45, 200), (0, 0, box_w, box_h), border_radius=12)
         pygame.draw.rect(score_box, (40, 180, 220, 120), (0, 0, box_w, box_h), 2, border_radius=12)
         bx = WINDOW_WIDTH // 2 - box_w // 2
-        by = WINDOW_HEIGHT // 2 - 80
+        by = WINDOW_HEIGHT // 2 - 20
         self.surface.blit(score_box, (bx, by))
 
         label = self.subtitle_font.render("FINAL SCORE", True, (120, 180, 200))
@@ -300,24 +300,6 @@ class UI:
         # How to play button
         self.how_to_play_rect = pygame.Rect(WINDOW_WIDTH // 2 - 110, mid_y - 40, 220, 40)
         self.draw_btn("HOW TO PLAY", self.how_to_play_rect, (80, 160, 200), small=True)
-
-        box = pygame.Surface((WINDOW_WIDTH - 80, 160), pygame.SRCALPHA)
-        box.fill((10, 20, 40, 160))
-        pygame.draw.rect(box, (40, 180, 220, 100), (0, 0, WINDOW_WIDTH - 80, 160), 1, border_radius=8)
-        self.surface.blit(box, (40, box_y))
-
-        instructions = [
-            ("Arrow Keys / WASD", "Move your cleanup vessel"),
-            ("Collect Plastic", "Score points + biofuel boost"),
-            ("Avoid Marine Life", "Collisions reduce your lives"),
-            ("Grab Power-ups", "Shield, Turbo, Eco Net, Hyperdrive"),
-        ]
-        for i, (key, desc) in enumerate(instructions):
-            iy = box_y + 12 + i * 36
-            key_surf = self.small_font.render(key, True, (100, 220, 255))
-            desc_surf = self.small_font.render(f"  -  {desc}", True, (200, 210, 220))
-            self.surface.blit(key_surf, (60, iy))
-            self.surface.blit(desc_surf, (60 + key_surf.get_width(), iy))
 
         ver = self.small_font.render("v2.0  |  Save the Ocean", True, (80, 100, 120))
         self.surface.blit(ver, (WINDOW_WIDTH // 2 - ver.get_width() // 2, WINDOW_HEIGHT - 25))
