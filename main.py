@@ -27,12 +27,12 @@ class Game:
         old_state = getattr(self, '_state', None)
         self._state = new_state
 
-        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER', 'SETTINGS', 'HOW_TO_PLAY']
+        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER', 'HOW_TO_PLAY']
         playing_states = ['PLAYING']
 
         if new_state in menu_states and old_state not in menu_states:
             self.play_music("MENU")
-        elif new_state in playing_states and old_state not in ['PLAYING', 'PAUSED']:
+        elif new_state in playing_states and old_state not in ['PLAYING', 'PAUSED', 'TRIVIA', 'SETTINGS']:
             self.play_music("PLAYING")
 
     def play_music(self, state):
@@ -151,32 +151,32 @@ class Game:
                     self.play_next_track()
 
             if self.state in ['LOGIN', 'SIGNUP']:
-                self._handle_auth_events(event)
+                self.handle_auth_events(event)
             elif self.state == 'PAUSED':
-                self._handle_paused_events(event)
+                self.handle_paused_events(event)
             elif self.state == 'TRIVIA':
-                self._handle_trivia_events(event)
+                self.handle_trivia_events(event)
             elif self.state == 'SETTINGS':
-                self._handle_settings_events(event)
+                self.handle_settings_events(event)
             elif self.state == 'HOW_TO_PLAY':
-                self._handle_how_to_play_events(event)
+                self.handle_how_to_play_events(event)
             elif self.state == 'GAMEOVER':
-                self._handle_gameover_events(event)
+                self.handle_gameover_events(event)
             else:
-                self._handle_general_events(event)
+                self.handle_general_events(event)
 
-    def _handle_auth_events(self, event):
+    def handle_auth_events(self, event):
         self.check_auth_keys(event)
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.check_auth_clicks(event.pos)
 
-    def _handle_paused_events(self, event):
+    def handle_paused_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self.check_pause_clicks(event.pos)
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.state = 'PLAYING'
 
-    def _handle_trivia_events(self, event):
+    def handle_trivia_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             for i in range(len(self.trivia_manager.current_question["options"])):
                 y = 240 + i * 60
@@ -194,7 +194,7 @@ class Game:
                             self.firebase.update_high_score(self.high_score)
                             self.firebase.record_game_session(self.player.score)
 
-    def _handle_gameover_events(self, event):
+    def handle_gameover_events(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             self.state = 'MENU'
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -204,14 +204,14 @@ class Game:
             elif self.ui.gameover_menu_rect.collidepoint(event.pos):
                 self.state = 'MENU'
 
-    def _handle_how_to_play_events(self, event):
+    def handle_how_to_play_events(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.state = 'MENU'
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.ui.htp_back_rect.collidepoint(event.pos):
                 self.state = 'MENU'
 
-    def _handle_settings_events(self, event):
+    def handle_settings_events(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.state = self.previous_state
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -239,7 +239,7 @@ class Game:
                 except:
                     pass
 
-    def _handle_general_events(self, event):
+    def handle_general_events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.state == 'PLAYING':
                 self.state = 'PAUSED'
@@ -403,11 +403,11 @@ class Game:
     def update(self, dt):
         self.total_time += dt
         if self.state == 'PLAYING':
-            self._update_playing(dt)
+            self.update_playing(dt)
         elif self.state == 'TRIVIA':
-            self._update_trivia(dt)
+            self.update_trivia(dt)
 
-    def _update_playing(self, dt):
+    def update_playing(self, dt):
         current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
 
         if self.spawner.difficulty_level > getattr(self, 'last_difficulty_level', 0):
@@ -496,7 +496,7 @@ class Game:
             if self.shake_timer <= 0:
                 self.shake_amount = 0
 
-    def _update_trivia(self, dt):
+    def update_trivia(self, dt):
         status = self.trivia_manager.update(dt)
         if status == "TIMEOUT":
             self.state = 'GAMEOVER'
@@ -586,15 +586,15 @@ class Game:
         elif self.state == 'LEADERBOARD':
             self.ui.draw_leaderboard_screen(self.leaderboard_data)
         elif self.state == 'TRIVIA':
-            self._draw_trivia(sx, sy)
+            self.draw_trivia(sx, sy)
         elif self.state == 'PLAYING':
-            self._draw_playing(sx, sy)
+            self.draw_playing(sx, sy)
         elif self.state == 'PAUSED':
-            self._draw_paused()
+            self.draw_paused()
         elif self.state == 'GAMEOVER':
-            self._draw_gameover(sx, sy)
+            self.draw_gameover(sx, sy)
 
-    def _draw_trivia(self, sx, sy):
+    def draw_trivia(self, sx, sy):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         self.entities.draw(render_surf)
@@ -602,7 +602,7 @@ class Game:
         self.screen.blit(render_surf, (sx, sy))
         self.ui.draw_trivia_screen(self.trivia_manager.current_question, self.trivia_manager.timer)
 
-    def _draw_playing(self, sx, sy):
+    def draw_playing(self, sx, sy):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
@@ -636,7 +636,7 @@ class Game:
             guest_txt = self.ui.small_font.render(notice, True, (180, 180, 180))
             self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 35))
 
-    def _draw_paused(self):
+    def draw_paused(self):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         for b in self.bubbles:
@@ -647,7 +647,7 @@ class Game:
             self.screen.blit(render_surf, (0, 0))
             self.ui.draw_pause_screen()
 
-    def _draw_gameover(self, sx, sy):
+    def draw_gameover(self, sx, sy):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         for b in self.bubbles:
