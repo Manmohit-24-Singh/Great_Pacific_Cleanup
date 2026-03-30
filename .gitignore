@@ -5,4 +5,4 @@ high_score.txt
 .env
 build/
 dist/
-
+serviceAccountKey.json

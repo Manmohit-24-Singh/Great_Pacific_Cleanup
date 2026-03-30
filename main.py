@@ -26,13 +26,13 @@ class Game:
     def state(self, new_state):
         old_state = getattr(self, '_state', None)
         self._state = new_state
-        
-        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER']
+
+        menu_states = ['MENU', 'LOGIN', 'SIGNUP', 'LEADERBOARD', 'GAMEOVER', 'HOW_TO_PLAY']
         playing_states = ['PLAYING']
-        
+
         if new_state in menu_states and old_state not in menu_states:
             self.play_music("MENU")
-        elif new_state in playing_states and old_state not in ['PLAYING', 'PAUSED']:
+        elif new_state in playing_states and old_state not in ['PLAYING', 'PAUSED', 'TRIVIA', 'SETTINGS']:
             self.play_music("PLAYING")
 
     def play_music(self, state):
@@ -42,13 +42,11 @@ class Game:
             if state == "MENU":
                 pygame.mixer.music.load(resource_path(os.path.join("sounds", f"evil conspiracy{SOUND_EXT}")))
                 pygame.mixer.music.set_volume(0.5)
-                # No endevent needed for looping menu track
                 pygame.mixer.music.set_endevent(0)
                 pygame.mixer.music.play(-1)
             elif state == "PLAYING":
                 pygame.mixer.music.load(self.music_queue[self.current_track_idx])
                 pygame.mixer.music.set_volume(0.5)
-                # Set endevent to trigger track cycling
                 pygame.mixer.music.set_endevent(self.MUSIC_END)
                 pygame.mixer.music.play()
         except:
@@ -87,7 +85,6 @@ class Game:
         self.logged_in_user = None
         self.username = "Guest"
 
-        # Auth Input State
         self.auth_email = ""
         self.auth_password = ""
         self.auth_username = ""
@@ -95,18 +92,16 @@ class Game:
         self.auth_loading = False
         self.leaderboard_data = []
 
-        # Ambient ocean bubbles
         self.bubbles = [Bubble() for _ in range(12)]
-
-        # Screen shake state
         self.shake_amount = 0
         self.shake_timer = 0
 
-        # Pre-cached blue gradient (no AI image)
         self.theme = 'surface'
+        self.music_on = True
+        self.music_volume = 0.5
+        self.previous_state = 'MENU'
         self.ocean_gradient = self.make_ocean()
 
-        # Pre-generate some wave line positions for animation
         self.wave_lines = []
         for i in range(20):
             self.wave_lines.append({
@@ -118,24 +113,19 @@ class Game:
                 'thickness': random.choice([1, 1, 2]),
             })
 
-        # Time tracking
         self.total_time = 0
 
-        # Persistent high score — writable user dir on desktop
         save_dir = os.path.join(os.path.expanduser("~"), ".great_pacific_cleanup")
         os.makedirs(save_dir, exist_ok=True)
         self.high_score_path = os.path.join(save_dir, "high_score.txt")
         if not self.logged_in_user:
-            # For Guest/Initial screen, try fetching world high score
             self.high_score = self.firebase.get_global_high_score() or self.load_highscore()
         else:
             self.high_score = self.load_highscore()
 
-        # Trivia Minigame
         self.trivia_manager = TriviaManager()
         self.trivia_used = False
 
-        # State
         self.state = 'MENU'
         self.reset_game()
 
@@ -155,52 +145,101 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-                
+
             if event.type == getattr(self, 'MUSIC_END', None):
                 if self.state == 'PLAYING':
                     self.play_next_track()
-            
-            if self.state in ['LOGIN', 'SIGNUP']:
-                self._handle_auth_events(event)
-            elif self.state == 'PAUSED':
-                self._handle_paused_events(event)
-            elif self.state == 'TRIVIA':
-                self._handle_trivia_events(event)
-            else:
-                self._handle_general_events(event)
 
-    def _handle_auth_events(self, event):
+            if self.state in ['LOGIN', 'SIGNUP']:
+                self.handle_auth_events(event)
+            elif self.state == 'PAUSED':
+                self.handle_paused_events(event)
+            elif self.state == 'TRIVIA':
+                self.handle_trivia_events(event)
+            elif self.state == 'SETTINGS':
+                self.handle_settings_events(event)
+            elif self.state == 'HOW_TO_PLAY':
+                self.handle_how_to_play_events(event)
+            elif self.state == 'GAMEOVER':
+                self.handle_gameover_events(event)
+            else:
+                self.handle_general_events(event)
+
+    def handle_auth_events(self, event):
         self.check_auth_keys(event)
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.check_auth_clicks(event.pos)
 
-    def _handle_paused_events(self, event):
+    def handle_paused_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self.check_pause_clicks(event.pos)
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.state = 'PLAYING'
 
-    def _handle_trivia_events(self, event):
+    def handle_trivia_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             for i in range(len(self.trivia_manager.current_question["options"])):
                 y = 240 + i * 60
                 btn_rect = pygame.Rect(WINDOW_WIDTH // 2 - 200, y, 400, 50)
                 if btn_rect.collidepoint(event.pos):
                     if self.trivia_manager.check_answer(i):
-                        # Correct -> revived
                         self.player.lives = 1
                         self.player.is_invulnerable = True
                         self.player.invulnerable_timer = 3.0
                         self.state = 'PLAYING'
                     else:
-                        # Incorrect -> game over
                         self.state = 'GAMEOVER'
                         if self.logged_in_user:
                             print(f"DEBUG: Trivia Failed - Syncing score {self.player.score}, Personal Best {self.high_score}")
                             self.firebase.update_high_score(self.high_score)
                             self.firebase.record_game_session(self.player.score)
 
-    def _handle_general_events(self, event):
+    def handle_gameover_events(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            self.state = 'MENU'
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.ui.gameover_play_again_rect.collidepoint(event.pos):
+                self.reset_game()
+                self.state = 'PLAYING'
+            elif self.ui.gameover_menu_rect.collidepoint(event.pos):
+                self.state = 'MENU'
+
+    def handle_how_to_play_events(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.state = 'MENU'
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.ui.htp_back_rect.collidepoint(event.pos):
+                self.state = 'MENU'
+
+    def handle_settings_events(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.state = self.previous_state
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.ui.settings_back_rect.collidepoint(event.pos):
+                self.state = self.previous_state
+            elif self.ui.settings_music_toggle_rect.collidepoint(event.pos):
+                self.music_on = not self.music_on
+                try:
+                    if self.music_on:
+                        pygame.mixer.music.unpause()
+                    else:
+                        pygame.mixer.music.pause()
+                except:
+                    pass
+            elif self.ui.settings_vol_down_rect.collidepoint(event.pos):
+                self.music_volume = max(0.0, round(self.music_volume - 0.1, 1))
+                try:
+                    pygame.mixer.music.set_volume(self.music_volume)
+                except:
+                    pass
+            elif self.ui.settings_vol_up_rect.collidepoint(event.pos):
+                self.music_volume = min(1.0, round(self.music_volume + 0.1, 1))
+                try:
+                    pygame.mixer.music.set_volume(self.music_volume)
+                except:
+                    pass
+
+    def handle_general_events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.state == 'PLAYING':
                 self.state = 'PAUSED'
@@ -215,11 +254,9 @@ class Game:
                 elif self.state == 'GAMEOVER':
                     self.state = 'MENU'
             elif event.key == pygame.K_g and self.state == 'MENU':
-                # Continue as guest
                 self.logged_in_user = None
                 self.username = "Guest"
                 self.state = 'PLAYING'
-                # Show world high score for guest
                 self.high_score = self.firebase.get_global_high_score()
                 self.reset_game()
             elif event.key == pygame.K_l and self.state == 'MENU':
@@ -232,6 +269,17 @@ class Game:
                 self.high_score = self.load_highscore()
             elif event.key == pygame.K_ESCAPE and self.state == 'LEADERBOARD':
                 self.state = 'MENU'
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.state == 'MENU':
+                if self.ui.settings_rect.collidepoint(event.pos):
+                    self.previous_state = 'MENU'
+                    self.state = 'SETTINGS'
+                elif self.ui.how_to_play_rect.collidepoint(event.pos):
+                    self.state = 'HOW_TO_PLAY'
+                elif self.ui.menu_sdg12_rect.collidepoint(event.pos):
+                    webbrowser.open("https://sdgs.un.org/goals/goal12")
+                elif self.ui.menu_sdg14_rect.collidepoint(event.pos):
+                    webbrowser.open("https://sdgs.un.org/goals/goal14")
 
     def check_pause_clicks(self, pos):
         if self.ui.pause_resume_rect.collidepoint(pos):
@@ -241,13 +289,15 @@ class Game:
             self.state = 'PLAYING'
         elif self.ui.pause_menu_rect.collidepoint(pos):
             self.state = 'MENU'
+        elif self.ui.pause_settings_rect.collidepoint(pos):
+            self.previous_state = 'PAUSED'
+            self.state = 'SETTINGS'
         elif self.ui.pause_sdg12_rect.collidepoint(pos):
             webbrowser.open("https://sdgs.un.org/goals/goal12")
         elif self.ui.pause_sdg14_rect.collidepoint(pos):
             webbrowser.open("https://sdgs.un.org/goals/goal14")
 
     def check_auth_clicks(self, pos):
-        # Check input fields
         if self.state == 'LOGIN':
             if pygame.Rect(150, 200, 300, 40).collidepoint(pos): self.ui.input_active = 'email'
             elif pygame.Rect(150, 300, 300, 40).collidepoint(pos): self.ui.input_active = 'password'
@@ -256,11 +306,10 @@ class Game:
             elif pygame.Rect(150, 270, 300, 40).collidepoint(pos): self.ui.input_active = 'email'
             elif pygame.Rect(150, 360, 300, 40).collidepoint(pos): self.ui.input_active = 'password'
 
-        # Check buttons
         if self.ui.auth_submit_rect.collidepoint(pos):
             if self.state == 'LOGIN': self.do_login()
             else: self.do_signup()
-        
+
         if self.ui.auth_switch_rect.collidepoint(pos):
             if self.state == 'LOGIN':
                 self.state = 'SIGNUP'
@@ -270,13 +319,11 @@ class Game:
                 self.state = 'LOGIN'
                 self.ui.input_active = 'email'
                 self.auth_error = ""
-        
-        # Back to menu button
+
         if self.ui.auth_back_rect.collidepoint(pos):
             self.state = 'MENU'
             self.auth_error = ""
 
-        # Guest button
         if self.state == 'LOGIN' and self.ui.auth_guest_rect.collidepoint(pos):
             self.logged_in_user = None
             self.username = "Guest"
@@ -286,28 +333,21 @@ class Game:
     def check_auth_keys(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_TAB:
-                # Cycle between fields
                 if self.state == 'LOGIN':
                     self.ui.input_active = 'password' if self.ui.input_active == 'email' else 'email'
                 else:
                     fields = ['username', 'email', 'password']
                     idx = (fields.index(self.ui.input_active) + 1) % 3
                     self.ui.input_active = fields[idx]
-            
             elif event.key == pygame.K_RETURN:
-                if self.state == 'LOGIN':
-                    self.do_login()
-                else:
-                    self.do_signup()
-            
+                if self.state == 'LOGIN': self.do_login()
+                else: self.do_signup()
             elif event.key == pygame.K_BACKSPACE:
                 if self.ui.input_active == 'email': self.auth_email = self.auth_email[:-1]
                 elif self.ui.input_active == 'password': self.auth_password = self.auth_password[:-1]
                 elif self.ui.input_active == 'username': self.auth_username = self.auth_username[:-1]
-            
             elif event.key == pygame.K_ESCAPE:
                 self.state = 'MENU'
-            
             else:
                 if event.unicode.isprintable() and event.unicode != '\r' and event.unicode != '\t':
                     if self.ui.input_active == 'email': self.auth_email += event.unicode
@@ -323,7 +363,6 @@ class Game:
             self.logged_in_user = res['user']
             self.username = res['username']
             self.state = 'MENU'
-            # Sync local high score from DB
             self.high_score = self.firebase.get_user_high_score()
             self.save_highscore()
         else:
@@ -338,12 +377,10 @@ class Game:
             self.logged_in_user = res['user']
             self.username = res['username']
             self.state = 'MENU'
-            # New user has 0 high score
             self.high_score = 0
             self.save_highscore()
         else:
             self.auth_error = res['error']
-
 
     def load_highscore(self):
         if not self.high_score_path:
@@ -361,61 +398,55 @@ class Game:
             with open(self.high_score_path, "w", encoding="utf-8") as f:
                 f.write(str(self.high_score))
         except OSError:
-            # Ignore write failures (e.g., read-only/web environments).
             pass
 
     def update(self, dt):
         self.total_time += dt
-
         if self.state == 'PLAYING':
-            self._update_playing(dt)
+            self.update_playing(dt)
         elif self.state == 'TRIVIA':
-            self._update_trivia(dt)
+            self.update_trivia(dt)
 
-    def _update_playing(self, dt):
+    def update_playing(self, dt):
         current_scroll_speed = BASE_SCROLL_SPEED + (self.spawner.difficulty_level * SCROLL_SPEED_INC)
 
-        # Level up logic
         if self.spawner.difficulty_level > getattr(self, 'last_difficulty_level', 0):
             self.last_difficulty_level = self.spawner.difficulty_level
             disp_level = self.spawner.difficulty_level + 1
             if disp_level % 5 == 0:
                 self.level_announcement_timer = 3.0
                 self.level_announcement_text = f"LEVEL {disp_level}!"
-        
+
         if getattr(self, 'level_announcement_timer', 0) > 0:
             self.level_announcement_timer -= dt
 
-        # Dynamic Visual Progression
         disp_level = self.spawner.difficulty_level + 1
         new_theme = self.theme
         if disp_level >= 10:
             new_theme = 'abyss'
         elif disp_level >= 5:
             new_theme = 'twilight'
-            
+
         if new_theme != self.theme:
             self.theme = new_theme
             self.ocean_gradient = self.make_ocean()
 
         self.player.update(dt)
-        
+
         if self.player.hyperdrive_active:
             current_scroll_speed *= 3
-            
+
         self.spawner.update(dt, self.entities, hyperdrive=self.player.hyperdrive_active)
         self.entities.update(dt, current_scroll_speed)
         self.particles.update(dt)
 
-        # Update floating score texts
         for ft in self.floating_texts:
             ft.update(dt)
         self.floating_texts = [ft for ft in self.floating_texts if ft.alive]
 
         for b in self.bubbles:
             b.update(dt, current_scroll_speed)
-            
-        # Magnetic Hyperdrive Pull
+
         if self.player.hyperdrive_active:
             for ent in self.entities:
                 if isinstance(ent, PlasticWaste) or isinstance(ent, PowerUp):
@@ -425,7 +456,6 @@ class Game:
                         if vec.length() > 0:
                             ent.pos += vec.normalize() * 1000 * dt
 
-        # trail
         self.player.trail_timer += dt
         if self.player.trail_timer > 0.06:
             self.player.trail_timer = 0
@@ -466,7 +496,7 @@ class Game:
             if self.shake_timer <= 0:
                 self.shake_amount = 0
 
-    def _update_trivia(self, dt):
+    def update_trivia(self, dt):
         status = self.trivia_manager.update(dt)
         if status == "TIMEOUT":
             self.state = 'GAMEOVER'
@@ -477,7 +507,7 @@ class Game:
 
     def check_collisions(self):
         if self.player.hyperdrive_active:
-            collect_radius = 200 # Extra large base magnet
+            collect_radius = 200
         elif self.player.eco_net_active:
             collect_radius = 100
         else:
@@ -497,10 +527,8 @@ class Game:
                 elif isinstance(ent, PowerUp):
                     if ent.power_type == 'hyperdrive':
                         self.player.hyperdrive_active = True
-                        self.player.hyperdrive_timer = 8.0 # 8 seconds of glory
+                        self.player.hyperdrive_timer = 8.0
                         self.player.is_invulnerable = True
-                        
-                        # Extra intense particles & screen shake
                         self.particles.emit_powerup(ent.pos.x, ent.pos.y)
                         self.floating_texts.append(
                             FloatingText(ent.pos.x - 40, ent.pos.y - 30, "MAGNETIC HYPERDRIVE!", (255, 215, 0)))
@@ -518,7 +546,6 @@ class Game:
             if dist < hard_col_radius:
                 if isinstance(ent, MarineLife) or isinstance(ent, Hazard):
                     if self.player.hyperdrive_active:
-                        # Vaporize obstacles during hyperdrive!
                         self.particles.emit_damage(ent.pos.x, ent.pos.y)
                         self.player.score += 50
                         self.floating_texts.append(FloatingText(ent.pos.x, ent.pos.y, "CRUSHED! +50", (255, 100, 100)))
@@ -527,11 +554,10 @@ class Game:
                         hit = self.player.take_damage(1)
                         if hit:
                             self.particles.emit_damage(self.player.pos.x, self.player.pos.y)
-                            # Collision-type-specific shake intensity
                             if isinstance(ent, Hazard):
                                 self.shake_amount = 15
                                 self.shake_timer = 0.5
-                            else:  # MarineLife — lighter hit
+                            else:
                                 self.shake_amount = 5
                                 self.shake_timer = 0.2
                             if isinstance(ent, Hazard) and ent.hazard_type == 'oil':
@@ -549,6 +575,10 @@ class Game:
 
         if self.state == 'MENU':
             self.ui.draw_start_screen(self.total_time, self.high_score, self.logged_in_user, self.username)
+        elif self.state == 'SETTINGS':
+            self.ui.draw_settings_screen(self.music_on, self.music_volume)
+        elif self.state == 'HOW_TO_PLAY':
+            self.ui.draw_how_to_play_screen()
         elif self.state == 'LOGIN':
             self.ui.draw_login_screen(self.auth_email, self.auth_password, self.auth_error, self.auth_loading)
         elif self.state == 'SIGNUP':
@@ -556,15 +586,15 @@ class Game:
         elif self.state == 'LEADERBOARD':
             self.ui.draw_leaderboard_screen(self.leaderboard_data)
         elif self.state == 'TRIVIA':
-            self._draw_trivia(sx, sy)
+            self.draw_trivia(sx, sy)
         elif self.state == 'PLAYING':
-            self._draw_playing(sx, sy)
+            self.draw_playing(sx, sy)
         elif self.state == 'PAUSED':
-            self._draw_paused()
+            self.draw_paused()
         elif self.state == 'GAMEOVER':
-            self._draw_gameover(sx, sy)
+            self.draw_gameover(sx, sy)
 
-    def _draw_trivia(self, sx, sy):
+    def draw_trivia(self, sx, sy):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         self.entities.draw(render_surf)
@@ -572,9 +602,8 @@ class Game:
         self.screen.blit(render_surf, (sx, sy))
         self.ui.draw_trivia_screen(self.trivia_manager.current_question, self.trivia_manager.timer)
 
-    def _draw_playing(self, sx, sy):
+    def draw_playing(self, sx, sy):
         self.draw_ocean()
-
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
         for b in self.bubbles:
@@ -582,37 +611,32 @@ class Game:
 
         self.entities.draw(render_surf)
 
-        # Eco net radius
         if self.player.eco_net_active:
             pulse = int(25 + 15 * math.sin(self.total_time * 4))
             net_glow = pygame.Surface((140, 140), pygame.SRCALPHA)
             pygame.draw.circle(net_glow, (0, 255, 255, pulse), (70, 70), 65, 2)
             render_surf.blit(net_glow, (int(self.player.pos.x) - 70, int(self.player.pos.y) - 70))
 
-        # Buff icons orbiting near the player
         self.ui.draw_buff_icons_near_player(self.player, render_surf)
-
         render_surf.blit(self.player.image, self.player.rect)
         self.particles.draw(render_surf)
 
-        # Floating score text
         for ft in self.floating_texts:
             ft.draw(render_surf)
 
         self.screen.blit(render_surf, (sx, sy))
         disp_level = self.spawner.difficulty_level + 1
         self.ui.draw_hud(self.player, self.high_score, disp_level)
-        
+
         if getattr(self, 'level_announcement_timer', 0) > 0:
             self.ui.draw_level_announcement(self.level_announcement_text, self.level_announcement_timer)
 
-        # Guest notice at bottom of screen
         if not self.logged_in_user:
             notice = "Playing as Guest - scores won't be saved"
             guest_txt = self.ui.small_font.render(notice, True, (180, 180, 180))
             self.screen.blit(guest_txt, (WINDOW_WIDTH // 2 - guest_txt.get_width() // 2, WINDOW_HEIGHT - 35))
 
-    def _draw_paused(self):
+    def draw_paused(self):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         for b in self.bubbles:
@@ -623,7 +647,7 @@ class Game:
             self.screen.blit(render_surf, (0, 0))
             self.ui.draw_pause_screen()
 
-    def _draw_gameover(self, sx, sy):
+    def draw_gameover(self, sx, sy):
         self.draw_ocean()
         render_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
         for b in self.bubbles:
@@ -640,17 +664,14 @@ class Game:
         for y in range(WINDOW_HEIGHT):
             ratio = y / WINDOW_HEIGHT
             if theme == 'surface':
-                # Vibrant blues
                 r = int(5 + 20 * ratio)
                 g = int(50 + 80 * ratio)
                 b = int(140 + 80 * ratio)
             elif theme == 'twilight':
-                # Deep purples/blues
                 r = int(10 + 30 * ratio)
                 g = int(10 + 20 * ratio)
                 b = int(60 + 50 * ratio)
-            else: # abyss
-                # Very dark, almost black
+            else:
                 r = int(2 + 5 * ratio)
                 g = int(5 + 15 * ratio)
                 b = int(15 + 20 * ratio)
@@ -659,10 +680,8 @@ class Game:
 
     def draw_ocean(self):
         self.screen.blit(self.ocean_gradient, (0, 0))
-
         wave_surf = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
 
-        # Animated wave lines that scroll with gameplay
         for wl in self.wave_lines:
             y = (wl['y_base'] + int(self.scroll_y * 0.6)) % (WINDOW_HEIGHT + 100) - 50
             points = []
@@ -673,7 +692,6 @@ class Game:
                 pygame.draw.lines(wave_surf, (180, 220, 255, wl['alpha']),
                                   False, points, wl['thickness'])
 
-        # Light caustic shimmer (subtle bright spots)
         for i in range(8):
             cx = int((math.sin(self.total_time * 0.3 + i * 1.7) * 0.5 + 0.5) * WINDOW_WIDTH)
             cy = int((math.sin(self.total_time * 0.4 + i * 2.1) * 0.5 + 0.5) * WINDOW_HEIGHT)
